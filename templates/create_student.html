@@ -1,0 +1,125 @@
+{% extends 'base.html'  %}
+{% block content %}
+
+    {% for message in get_flashed_messages(category_filter=["success"]) %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+     {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    {% for message in get_flashed_messages(category_filter=['warning']) %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+     {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+        {% for message in get_flashed_messages(category_filter=['danger']) %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+     {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+        {% for message in get_flashed_messages(category_filter=['info']) %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+     {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+{% if account %}
+      <h1>Account has been created!</h1>
+            <br/><br/>
+        <div class="card">
+      <div class="card-header">
+        {{ account.email }}
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">Account Details:</h5>
+        <p class="card-text">
+            <strong>First Name:</strong> {{ account.user.first_name }}<br/>
+            <strong>Last Name:</strong> {{ account.user.last_name }}<br/>
+            <strong>Age:</strong> {{ account.user.age }}<br/>
+            <strong>Belt:</strong> {{ account.user.belt.belt_name }}<br/>
+            <strong>Date Joined:</strong> {{ account.date_added }}<br/>
+            <strong>Account Type:</strong> {{ account.authority }}<br/>
+        </p>
+      </div>
+    </div>
+    <br/>
+    <a href="{{ url_for('create_student') }}" class="btn btn-outline-primary btn-sm">Create New Account</a>
+    <a href="{{ url_for('edit_account', id=account.id) }}" class="btn btn-outline-secondary btn-sm">Edit Account</a>
+    <a href="{{ url_for('delete_account', id=account.id) }}" class="btn btn-outline-danger btn-sm">Delete Account</a>
+    {% else %}
+
+
+    <h1>Create a New User</h1>
+    <br/>
+
+    <form class="row g-3 border border-3 p-3 bg-white" method="POST">
+     {{ form.hidden_tag() }}
+
+      <div class="col-12">
+       {{ form.email.label(
+        class="form-label") }}
+        {{ form.email(
+        class="form-control", placeholder="Example@email.com") }}
+
+      </div>
+
+      <div class="col-md-6">
+        {{ form.password.label(
+        class="form-label") }}
+        {{ form.password(
+        class="form-control") }}
+      </div>
+      <div class="col-md-6">
+        {{ form.password_match.label(
+        class="form-label") }}
+        {{ form.password_match(
+        class="form-control") }}
+      </div>
+        <div class="col-md-6">
+        {{ form.first_name.label(
+        class="form-label") }}
+        {{ form.first_name(
+        class="form-control") }}
+      </div>
+      <div class="col-md-6">
+        {{ form.last_name.label(
+        class="form-label") }}
+        {{ form.last_name(
+        class="form-control") }}
+      </div>
+      <div class="col-2">
+        {{ form.age.label(
+        class="form-label") }}
+        {{ form.age(
+        class="form-control") }}
+
+      </div>
+
+      <div class="col-md-4">
+        {{ form.belt_id.label(
+        class="form-label") }}
+        {{ form.belt_id(
+        class="form-select") }}
+      </div>
+      <div class="col-md-2">
+         {{ form.authority.label(
+        class="form-label") }}
+        {{ form.authority(
+        class="form-select") }}
+      </div>
+
+      <div class="col-12">
+        {{ form.submit(
+        class="btn btn-primary") }}
+      </div>
+    </form>
+
+    <br/><br/><br/>
+{% endif %}
+{% endblock %}

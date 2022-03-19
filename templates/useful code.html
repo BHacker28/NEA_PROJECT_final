@@ -1,0 +1,98 @@
+
+
+
+
+<!-- FIELDS AND VALIDATORS-->
+<!--===================================
+
+-BooleanField
+-dateField
+-DatetimeField
+-DecimalField
+-FileField
+-HiddenField
+-MultipleField
+-FieldList
+-FloatField
+-FormField
+-IntegerField
+-PasswordField
+-RadioField
+-SelectField
+-SelectMultipleField
+-SubmitField
+-StringField
+-TextAreaField
+
+-DataRequired
+-Email
+-EqualTo
+-InputRequired
+-IPAddress
+-Length
+-MacAddress
+-NumberRange
+-Optional
+-Regexp
+-URL
+-UUID
+-AnyOf
+-NoneOf
+-->
+
+<!-- COLOURS (BOOTSTRAP)-->
+<!--
+BLUE - primary
+GREY - secondary
+GREEN - success
+RED - danger
+YELLOW - warning
+LIGHT BLUE - info
+WHITE - light
+DARk GREY - dark
+-->
+
+
+<!--DROP DOWN IN NAVBAR-->
+<!-- <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+           Dropdown
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+           <li><a class="dropdown-item" href="#">Action</a></li>
+            <li><a class="dropdown-item" href="#">Another action</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#">Something else here</a></li>
+          </ul>
+        </li>
+-->
+
+
+<!--MIGRATE DATA BASE USING CMD
+flask db migrate -m "(commit message)"
+flask db upgrade
+-->
+
+
+ account = Accounts.query.get_or_404(id)
+    form = NewStudentForm()
+    if form.validate_on_submit():
+        account.user.first_name = form.first_name.data
+        account.user.last_name = form.last_name.data
+        account.email = form.email.data
+        account.user.belt.belt_name = form.belt_id.data
+        account.authority = form.authority.data
+        account.user.age = form.age.data
+        # Update Database
+        db.session.add(account)
+        db.session.commit()
+        flash("Post Has Been Updated!")
+        return redirect(url_for('account_details', id=account.id))
+
+    form.first_name.data = account.user.first_name
+    form.last_name.data = account.user.last_name
+    form.email.data = account.email
+    form.belt_id.data = str(account.user.belt.belt_id)
+    form.authority.data = account.authority
+    form.age.data = account.user.age
+    return render_template('edit_account.html', form=form, account=account)

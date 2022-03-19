@@ -1,0 +1,66 @@
+{% extends 'base.html'  %}
+{% block content %}
+
+{% for message in get_flashed_messages(category_filter=["success"]) %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+ {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+
+{% for message in get_flashed_messages(category_filter=['warning']) %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+ {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+
+    {% for message in get_flashed_messages(category_filter=['danger']) %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+ {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+
+    {% for message in get_flashed_messages(category_filter=['info']) %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+ {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+
+
+        <h1>Confirm Details:</h1>
+            <br/><br/>
+        <div class="card">
+      <div class="card-header">
+        {{ account.email }}
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">Account Details:</h5>
+        <p class="card-text">
+            <strong>First Name:</strong> {{ account.user.first_name }}<br/>
+            <strong>Last Name:</strong> {{ account.user.last_name }}<br/>
+            <strong>Age:</strong> {{ account.user.age }}<br/>
+            <strong>Belt:</strong> {{ account.user.belt.belt_name }}<br/>
+            <strong>Date Joined:</strong> {{ account.date_added }}<br/>
+            <strong>Account Type:</strong> {{ account.authority }}<br/>
+        </p>
+      </div>
+    </div>
+    <br/>
+
+    <form>
+    {{ confirmform.hidden_tag() }}
+         <div class="form-check">
+              {{ form.email(
+        class="form-check-input", type="checkbox", id="gridCheck", placeholder="Example@email.com") }}
+          {{ confirmform.confirm.label(
+        class="form-label") }}
+         </div>
+        {{ confirmform.submit(class="btn btn-success") }}
+    </form>
+    <a href="{{url_for('edit_create_student')}}" class = "btn btn-secondary btn">Edit</a>
+    <a href="{{url_for('create_student')}}" class = "btn btn-danger btn">Cancel</a>
+
+{% endblock %}
