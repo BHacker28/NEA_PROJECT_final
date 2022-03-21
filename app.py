@@ -481,7 +481,8 @@ def insert_account_into_db(account):
 
 # Create a route decorator
 @app.route('/')
-def index():  # put application's code here
+def index():  # Opening Page
+    session['current_user'] = None
     return render_template("index.html")
 
 
@@ -500,12 +501,13 @@ def login():
             # Check Hashed Password with inputted one
             if check_password_hash(account_data_all.password_hash, form.password.data):
                 flash("Login Successful!", "success")
-                return render_template('test.html', current_user = account_data_all)
+                session['current_user'] = account_data_all.__dict__
+                return render_template('test.html')
             else:
-                flash("Wrong Password or Username. Try Again...", category="danger")
+                flash("Wrong Password or Username. Try Again...", category="danger_below")
         except:
             print("account doesn't exist")
-            flash("Wrong Password or Username. Try Again...", category="danger")
+            flash("Wrong Password or Username. Try Again...", category="danger_below")
 
     return render_template('login.html', form=form)
 
@@ -514,8 +516,10 @@ def login():
 @app.route('/logout', methods=['GET', 'POST'])
 # LOG IN REQUIRED
 def logout():
+
+    session['current_user'] == None
     flash("You Have been logged out!", "info")
-    return redirect(url_for('login'))
+    return render_template('index.html')
 
 
 # Create Dashboard Page
@@ -640,7 +644,9 @@ def account_details(id):
 def page_not_found(e):
     return render_template("404.html")
 
+# Clears session
 
 # Run the App
 if __name__ == '__main__':
     app.run()
+

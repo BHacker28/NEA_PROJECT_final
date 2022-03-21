@@ -10,6 +10,6 @@
 
 {% endfor %}
 
-    {{ current_user.authority }}
+    {{ session['current_user']['_email']}}
 
 {% endblock %}

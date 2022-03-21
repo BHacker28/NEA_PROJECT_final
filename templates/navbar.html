@@ -7,6 +7,7 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
+         {% if session['current_user'] != None %}
             <li>
               <a class="nav-link" href="{{url_for('logout')}}">Logout</a>
             </li>
@@ -15,14 +16,15 @@
               <a class="nav-link" href="{{url_for('dashboard')}}">dashboard</a>
             </li>
 
-
-
+         {% endif %}
+        {% if session['current_user'] == None %}
             <li>
               <a class="nav-link" href="{{url_for('login')}}">Login</a>
             </li>
+        {% endif %}
 
-          {% if current_user is defined %}
-              {% if current_user.authority == instructor %}
+          {% if session['current_user'] != none %}
+              {% if session['current_user']['_authority'] == instructor %}
 
                      <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
