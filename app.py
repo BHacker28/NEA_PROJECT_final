@@ -146,7 +146,8 @@ def table_check(cursor):
             mydb.commit()
             table_count += 1
             if table_name == "BELTS":
-                mycursor.execute("INSERT INTO BELTS(belt_id, belt_name, wait_time) VALUES (1, 'White', '0000-03-00'), "
+                mycursor.execute("INSERT INTO BELTS(belt_id, belt_name, wait_time) VALUES (0, 'Not Selected', '0000-00-00'), "
+                                 "(1, 'White', '0000-03-00'),"
                                  "(2, 'Orange - One White Stripe', '0000-03-00'),"
                                  "(3, 'Orange', '0000-03-00'),"
                                  "(4, 'Yellow', '0000-03-00'),"
@@ -251,6 +252,16 @@ class EditStudentForm(FlaskForm):
     authority = SelectField("Account Type", choices=[('0', 'Choose...'), ('student', 'Student'),
                                                      ('instructor', 'Instructor')],
                             validators=[NoneOf('0', 'Choose...')])
+    submit = SubmitField("Confirm")
+
+class SignUpForm(FlaskForm):
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
+    age = IntegerField("Age", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired(), EqualTo('password_match',
+                                                                             message='Passwords Must Match!')], )
+    password_match = PasswordField("Confirm Password", validators=[DataRequired()])
     submit = SubmitField("Confirm")
 
 
@@ -482,7 +493,7 @@ def insert_account_into_db(account):
 # Create a route decorator
 @app.route('/')
 def index():  # Opening Page
-    session['current_user'] = None
+    session['user'] = None
     return render_template("index.html")
 
 
@@ -501,8 +512,8 @@ def login():
             # Check Hashed Password with inputted one
             if check_password_hash(account_data_all.password_hash, form.password.data):
                 flash("Login Successful!", "success")
-                session['current_user'] = account_data_all.__dict__
-                return render_template('test.html')
+                session['user'] = account_data_all.__dict__
+                return redirect(url_for('dashboard'))
             else:
                 flash("Wrong Password or Username. Try Again...", category="danger_below")
         except:
@@ -517,7 +528,7 @@ def login():
 # LOG IN REQUIRED
 def logout():
 
-    session['current_user'] == None
+    session['user'] == None
     flash("You Have been logged out!", "info")
     return render_template('index.html')
 
@@ -526,13 +537,12 @@ def logout():
 @app.route('/dashboard', methods=['GET', 'POST'])
 # LOG IN REQUIRED
 def dashboard():
-    return render_template('dashboard.html')
-
-
-# need to change the html as accessing the old method with the account object being incorrect.
-# File "E:\College\Computer Science\NEA\Pycharm\templates\create_student.html", line 42, in block 'content'
-#    <strong>First Name:</strong> {{ account.user.first_name }}<br/>
-# jinja2.exceptions.UndefinedError: 'tuple object' has no attribute 'user'
+    belt_id = session['user']['_belt_id']
+    belt_name_q = "SELECT belt_name FROM belts WHERE belt_id = %s"
+    belt_id = (belt_id, )
+    mycursor.execute(belt_name_q, belt_id)
+    belt_name = mycursor.fetchall()
+    return render_template('dashboard.html', belt_name = belt_name[0][0])
 
 @app.route('/create/student', methods=['GET', 'POST'])
 def create_student():
@@ -565,10 +575,10 @@ def create_student():
             new_account.belt_id = form.belt_id.data
             new_account.authority = form.authority.data
             new_account.age = form.age.data
-            new_account.date_added = datetime.utcnow()
+            new_account.date_added = date.utcnow()
             new_account.password_hash = hashed_pw
             new_account.last_logged_in = datetime.utcnow()
-            new_account.last_graded = datetime.utcnow()
+            new_account.last_graded = date.utcnow()
             insert_account_into_db(new_account)
 
             flash("User Added Successfully!", 'success')
@@ -584,6 +594,58 @@ def create_student():
         form.age.data = ''
 
     return render_template("create_student.html",
+                           form=form)
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignUpForm()
+    account = None
+
+    if form.validate_on_submit():
+        search_account_statement = "SELECT * FROM accounts WHERE email = %(email)s"
+        parameter = {'email': form.email.data}
+        mycursor.execute(search_account_statement, parameter)
+        account = mycursor.fetchone()
+
+        if account is None:
+            mycursor.execute("SELECT id FROM accounts ORDER BY id DESC")
+
+            next_id = mycursor.fetchone()
+            try:
+                new_id = int(next_id[0]) + 1
+
+            except:
+                new_id = 1
+            new_account = Account(new_id)
+
+            # Hash password
+            hashed_pw = generate_password_hash(form.password.data, "sha256")
+            # find belt in database
+            new_account.email = form.email.data
+            new_account.first_name = form.first_name.data
+            new_account.last_name = form.last_name.data
+            new_account.belt_id = 1
+            new_account.authority = 'student'
+            new_account.age = form.age.data
+            new_account.date_added = datetime.utcnow()
+            new_account.password_hash = hashed_pw
+            new_account.last_logged_in = datetime.utcnow()
+            new_account.last_graded = datetime.utcnow()
+#            new_account.approved = True
+            insert_account_into_db(new_account)
+
+            flash("Account request Successful! Please wait for the account to be approved by your instructor.", 'success')
+            return redirect(url_for('index'))
+
+        form.first_name.data = ''
+        form.last_name.data = ''
+        form.email.data = ''
+        form.password.data = ''
+        form.password_match.data = ''
+        form.age.data = ''
+
+    return render_template("signup.html",
                            form=form)
 
 
@@ -643,8 +705,6 @@ def account_details(id):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html")
-
-# Clears session
 
 # Run the App
 if __name__ == '__main__':

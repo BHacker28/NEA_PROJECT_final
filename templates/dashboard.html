@@ -1,33 +1,22 @@
 {% extends 'base.html'  %}
 {% block content %}
 
-{% for message in get_flashed_messages() %}
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
- {{ message }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-{% endfor %}
-
-
-   
         <h2>Dashboard</h2>
             <br/><br/>
 
 
     <div class="card">
       <div class="card-header">
-        {{ current_user.name }}
+       <strong> {{ session['user']['_email'] }}</strong>
       </div>
       <div class="card-body">
         <h5 class="card-title">Welcome To Your User Dashboard</h5>
         <p class="card-text">
-            <strong>Name:</strong> {{ current_user.name }}<br/>
-            <strong>Username:</strong> {{ current_user.username }}<br/>
-            <strong>User ID:</strong> {{ current_user.id }}<br/>
-            <strong>Email:</strong> {{ current_user.email }}<br/>
-            <strong>Belt:</strong> {{ current_user.belt }}<br/>
-            <strong>Date Joined:</strong> {{ current_user.date_added }}<br/>
+            <strong>First Name:</strong> {{ session['user']['_first_name'] }}<br/>
+            <strong>Last Name:</strong> {{ session['user']['_last_name'] }}<br/>
+            <strong>User ID:</strong> {{ session['user']['_user_id'] }}<br/>
+            <strong>Belt:</strong> {{ belt_name }}<br/>
+            <strong>Date Joined:</strong> {{ session['user']['_date_added'] }}<br/>
         </p>
         <a href="{{ url_for('logout')}}" class="btn btn-primary btn-sm">Logout</a>
       </div>
