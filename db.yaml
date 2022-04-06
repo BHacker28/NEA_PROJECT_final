@@ -4,4 +4,4 @@ mysql_password: 'NEAKokoro0232#'
 mysql_port: '3306'
 mysql_db: 'nma'
 app_secret_key: 'Kokoro#'
-db_wipe_key: 0121
+db_wipe_key: 9121

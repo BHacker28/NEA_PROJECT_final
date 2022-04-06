@@ -3,7 +3,7 @@
 
 
 
-{% if session['manage_user'] %}
+{% if session['manage_user']  %}
       <h1>Account has been created!</h1>
             <br/><br/>
         <div class="card">
@@ -29,61 +29,57 @@
 {% else %}
 
 
-    <h1>Create a New User</h1>
+    <h1>Create a New Lesson</h1>
     <br/>
 
     <form class="row g-3 border border-3 p-3 bg-white" method="POST">
      {{ form.hidden_tag() }}
 
-      <div class="col-12">
-       {{ form.email.label(
+      <div class="col-sm-6">
+       {{ form.day.label(
         class="form-label") }}
-        {{ form.email(
-        class="form-control", placeholder="Example@email.com") }}
-      </div>
-      <div class="col-md-6">
-        {{ form.password.label(
-        class="form-label") }}
-        {{ form.password(
+        {{ form.day(
         class="form-control") }}
       </div>
-      <div class="col-md-6">
-        {{ form.password_match.label(
+      <div class="col-sm-2">
+        {{ form.lesson_start.label(
         class="form-label") }}
-        {{ form.password_match(
+        {{ form.lesson_start(
+        class="form-control") }}
+      </div>
+      <div class="col-sm-2">
+        {{ form.lesson_end.label(
+        class="form-label") }}
+        {{ form.lesson_end(
+        class="form-control") }}
+      </div>
+
+         <div class="col-sm-2">
+        {{ form.maximum.label(
+        class="form-label") }}
+        {{ form.maximum(
         class="form-control") }}
       </div>
         <div class="col-md-6">
-        {{ form.first_name.label(
+        {{ form.location.label(
         class="form-label") }}
-        {{ form.first_name(
+        {{ form.location(
         class="form-control") }}
       </div>
       <div class="col-md-6">
-        {{ form.last_name.label(
+        {{ form.level.label(
         class="form-label") }}
-        {{ form.last_name(
+        {{ form.level(
         class="form-control") }}
       </div>
-      <div class="col-2">
-        {{ form.age.label(
-        class="form-label") }}
-        {{ form.age(
-        class="form-control") }}
 
-      </div>
 
-      <div class="col-md-4">
-        {{ form.belt_id.label(
+
+      <div class="col-12">
+        {{ form.information.label(
         class="form-label") }}
-        {{ form.belt_id(
-        class="form-select") }}
-      </div>
-      <div class="col-md-2">
-         {{ form.authority.label(
-        class="form-label") }}
-        {{ form.authority(
-        class="form-select") }}
+        {{ form.information(
+        class="form-control", rows="4", placeholder="Enter Additional information to be displayed upon booking...") }}
       </div>
 
       <div class="col-12">

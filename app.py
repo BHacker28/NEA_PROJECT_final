@@ -1,39 +1,68 @@
 from flask import Flask, render_template, flash, request, redirect, url_for, session
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, SelectField, IntegerField, \
-    validators
-from wtforms.validators import DataRequired, EqualTo, Length, NoneOf
+    validators, TimeField
+from wtforms.validators import DataRequired, EqualTo, Length, NoneOf, NumberRange
+from wtforms.widgets import TextArea
 from datetime import date, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.widgets import TextArea
 import yaml
 import mysql.connector
 from mysql.connector import errorcode
+from dateutil.relativedelta import relativedelta
+import webbrowser
+import calendar
 
-# !!!! Remove instructor table
-# !!!! Add location to lesson table
 
-# !!! Need Belt id not name in account object
-# !!! class to add new account must account for relations
 
-# !! Passwords dont match
+# dictionary of account in a session takes form:
+# {'_id': 1, '_email': 's', '_password_hash':
+# 'sha256$joODB5oL94CRGYYC$a39acb5d56a03905bd1c168ad8afc0c0d8d64577d15d9070eb365e38060e5737', '_user_id': 1,
+# '_authority': 'student', '_last_logged_in': datetime.datetime(2022, 3, 22, 12, 56, 13), '_date_added':
+# datetime.datetime(2022, 3, 22, 12, 56, 13), '_first_name': 'Ben', '_last_name': 'Hacker', '_age': 18, '_belt_id':
+# 1, '_last_graded': datetime.datetime(2022, 3, 22, 12, 56, 13), '_approved': None}
 
-# !! CREATE TABLE CREATION STATEMENTS
-# !! REMOVE CAPACITY TABLE
 
 # ! Change age to DoB
-#    --- Add a age calculator to account object to work out age automatically
+#    --- Add an age calculator to account object to work out age automatically
 
 # IMPORTANT
-# MUST CHANGE BELT OPTION TO READ OFF BELTS TABLES
 
-# Add position in class to bookings, remove capacity table and authority
-# therefore need to add adding to instructor table if the field is set to instructor
+# create lesson page
 
-# remove login in manager
-# replace with flask session
+# commit to database
 
-# add a method for commit a account object to database using cursor
+# class browser
+
+# ----- display all classes from a certain place
+
+# -- therefore need a location select page after clicking book button that will be added to main page
+
+# clicking book, brings up screen in more detail with info and a conf button
+
+# ---- adds user_id lesson id date to bookings
+
+# ----- this should check to see all the classes where lesson id and date matches, count the number,
+# and compare to maximum number of people
+
+# page to seen own bookings
+
+# page identical to bookings for instructor, but when clicked on brings up every student booked. copy pasta
+
+# ---- account edit screen after new account and editing own personal account
+
+# ---- lesson amend, delete
+
+# New cluster of pages management umbrella  for instructors also contain a creation widget thingy for student/lesson
+#       account search system?
+#       ability to edit account and delete accounts as instuctor
+#       approve page as well.
+
+# time until grade
+
+# geolocation reccomendation feature
+
 
 # other things
 # create custom error 500 page
@@ -56,25 +85,32 @@ def DeleteAllTables(cursor, key):
             cursor.execute("DROP TABLE BOOKINGS")
         except:
             print("Table doesn't exist")
-
         try:
             cursor.execute("DROP TABLE LESSONS")
         except:
             print("Table doesn't exist")
         try:
+            int("hello")
             cursor.execute("DROP TABLE ACCOUNTS")
+
         except:
             print("Table doesn't exist")
 
         try:
+            int("hello")
             cursor.execute("DROP TABLE USERS")
+
         except:
             print("Table doesn't exist")
 
         try:
+            int("hello")
             cursor.execute("DROP TABLE BELTS")
+
         except:
             print("Table doesn't exist")
+
+        print("\n\n" + "-" * 60 + "\n\nDatabase has been wiped.\n\n" + '-' * 60)
     else:
         print("\n\n" + "-" * 60 + "\n\nDatabase wipe attempted and failed due to invalid key.\n\n" + '-' * 60)
 
@@ -90,29 +126,54 @@ TABLES = {'BELTS': '''CREATE TABLE BELTS(
                    first_name char(50) NOT NULL,
                    last_name char(50) NOT NULL,
                    age int NOT NULL,
-                   last_graded DATETIME,      
+                   last_graded DATE,      
                    FOREIGN KEY(belt_id) REFERENCES belts(belt_id));''', 'ACCOUNTS': '''CREATE TABLE ACCOUNTS(
                       id int PRIMARY KEY,
                       user_id int NOT NULL,
                       email char(100) NOT NULL UNIQUE,
                       password_hash char(90) NOT NULL,
                       authority char(10) NOT NULL,
-                      date_added DATETIME,
-                      last_logged_in DATETIME,
+                      date_added DATE,
+                      last_logged_in DATE,
+                      approved bool NOT NULL,
                       FOREIGN KEY (user_id) REFERENCES Users(user_id));''', 'LESSONS': '''CREATE TABLE LESSONS(
                      lesson_id int AUTO_INCREMENT,
-                     id int NOT NULL,
                      day char(10) NOT NULL,
-                     time int NOT NULL,
+                     start_time TIME NOT NULL,
+                     end_time TIME NOT NULL,
                      location char(50),
+                     maximum int NOT NULL,
+                     info char(200),
+                     level char(50) NOT NULL,
                      PRIMARY KEY (lesson_id));''', 'BOOKINGS': '''CREATE TABLE BOOKINGS(
                       booking_id int PRIMARY KEY,
                       user_id int NOT NULL,
                       lesson_id int NOT NULL,
                       date DATE NOT NULL,
-                      position int NOT NULL,
                       FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
                       FOREIGN KEY (user_id) REFERENCES Users(user_id));'''}
+
+Belt_lookup_table = '''INSERT INTO BELTS(belt_id, belt_name, wait_time) VALUES (0, 'Not Selected', '0000-00-00'),
+                    (1, 'White', '0000-03-00'),
+                    (2, 'Orange - One White Stripe', '0000-03-00'),
+                    (3, 'Orange', '0000-03-00'),
+                    (4, 'Yellow', '0000-03-00'),
+                    (5, 'Green','0000-03-00'),
+                    (6, 'Purple', '0000-03-00'),
+                    (7, 'Blue', '0000-03-00'),
+                    (8, 'Brown - One White Stripe', '0000-03-00'),
+                    (9, 'Brown - Two White Stripe', '0000-03-00'),
+                    (10, 'Brown', '0000-03-00'),
+                    (11, '1st Dan', '0000-03-00'),
+                    (12, '2nd Dan', '0000-03-00'),
+                    (13, '3rd Dan', '0000-03-00'),
+                    (14, '4th Dan', '0000-03-00'),
+                    (15, '5th Dan', '0000-03-00'),
+                    (16, '6th Dan', '0000-03-00'),
+                    (17, '7th Dan', '0000-03-00'),
+                    (18, '8th Dan', '0000-03-00'),
+                    (19, '9th Dan', '0000-03-00'),
+                    (20, '10th Dan', '0000-03-00');'''
 
 try:  # try statement to provide user-friendly error messages if any database-related errors are raised
     mydb = mysql.connector.connect(  # configure connection to mysql database
@@ -135,6 +196,7 @@ mycursor = mydb.cursor(buffered=True)
 
 
 # CREATE THE TABLES WHICH DO NOT EXIST
+
 def table_check(cursor):
     table_count = 0
 
@@ -145,28 +207,9 @@ def table_check(cursor):
             cursor.execute(table_sql_statement)
             mydb.commit()
             table_count += 1
+            #checks each table to name for required table which needs filling
             if table_name == "BELTS":
-                mycursor.execute("INSERT INTO BELTS(belt_id, belt_name, wait_time) VALUES (0, 'Not Selected', '0000-00-00'), "
-                                 "(1, 'White', '0000-03-00'),"
-                                 "(2, 'Orange - One White Stripe', '0000-03-00'),"
-                                 "(3, 'Orange', '0000-03-00'),"
-                                 "(4, 'Yellow', '0000-03-00'),"
-                                 "(5, 'Green','0000-03-00'),"
-                                 "(6, 'Purple', '0000-03-00'),"
-                                 "(7, 'Blue', '0000-03-00'),"
-                                 "(8, 'Brown - One White Stripe', '0000-03-00'),"
-                                 "(9, 'Brown - Two White Stripe', '0000-03-00'),"
-                                 "(10, 'Brown', '0000-03-00'),"
-                                 "(11, '1st Dan', '0000-03-00'),"
-                                 "(12, '2nd Dan', '0000-03-00'),"
-                                 "(13, '3rd Dan', '0000-03-00'),"
-                                 "(14, '4th Dan', '0000-03-00'),"
-                                 "(15, '5th Dan', '0000-03-00'),"
-                                 "(16, '6th Dan', '0000-03-00'),"
-                                 "(17, '7th Dan', '0000-03-00'),"
-                                 "(18, '8th Dan', '0000-03-00'),"
-                                 "(19, '9th Dan', '0000-03-00'),"
-                                 "(20, '10th Dan', '0000-03-00')")
+                mycursor.execute(Belt_lookup_table)
                 mydb.commit()
                 print("Belts Table filled.", end=' - ')
         except mysql.connector.Error as err:
@@ -183,7 +226,7 @@ def table_check(cursor):
 
 
 # Checks to see if any tables are missing
-
+# DeleteAllTables(mycursor, 9121)
 table_check(mycursor)
 mydb.commit()
 
@@ -254,6 +297,7 @@ class EditStudentForm(FlaskForm):
                             validators=[NoneOf('0', 'Choose...')])
     submit = SubmitField("Confirm")
 
+
 class SignUpForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
@@ -263,6 +307,34 @@ class SignUpForm(FlaskForm):
                                                                              message='Passwords Must Match!')], )
     password_match = PasswordField("Confirm Password", validators=[DataRequired()])
     submit = SubmitField("Confirm")
+
+
+class NewLessonForm(FlaskForm):
+    day = SelectField("Day", choices=[('0', 'Choose...'), ('Monday', 'Monday'), ('Tuesday', 'Tuesday'),
+                                      ('Wednesday', 'Wednesday'), ('Thursday', 'Thursday'), ('Friday', 'Friday'),
+                                      ('Saturday', 'Saturday'),
+                                      ('Sunday', 'Sunday')],
+                      validators=[NoneOf('0', 'Choose...')])
+
+    lesson_start = TimeField('Lesson start', validators=[DataRequired()])
+    lesson_end = TimeField('Lesson end', validators=[DataRequired()])
+    maximum = IntegerField('Maximum Students', validators=[DataRequired()])
+    location = SelectField("Location", choices=[('0', 'Choose...'), ('wincanton', 'Wincanton'), ('merriot', 'Merriot'),
+                                                ('queen camel', 'Queen Camel')],
+                           validators=[NoneOf('0', 'Choose...')])
+    level = SelectField("Aimed at:", choices=[('0', 'Choose...'),('all', 'All'), ('adults', 'Adults'), ('children', 'Children'),
+                                            ('little samurai', 'Little Samurai'), ('senior grades', 'Senior Grades'), ('junior grades', 'Junior Grades')],
+                           validators=[NoneOf('0', 'Choose...')])
+    information = StringField("Class Information", validators=[DataRequired()], widget=TextArea())
+
+    submit = SubmitField("Confirm")
+
+    def validate_times(self, lesson_start, lesson_end):
+        if lesson_start > lesson_end:
+            return False
+        else:
+            return True
+
 
 
 # Create account object
@@ -281,8 +353,7 @@ class Account:
         self._age = None
         self._belt_id = None
         self._last_graded = None
-        self._instructor_id = None
-        self._location = None
+        self._approved = None
 
     # Getters
     @property
@@ -334,12 +405,8 @@ class Account:
         return self._last_graded
 
     @property
-    def instructor_id(self):
-        return self._instructor_id
-
-    @property
-    def location(self):
-        return self._location
+    def approved(self):
+        return self._approved
 
     # ------------- Setters -------------
 
@@ -391,16 +458,120 @@ class Account:
     def last_graded(self, last_graded):
         self._last_graded = last_graded
 
-    @instructor_id.setter
-    def instructor_id(self, instructor_id):
-        self._instructor_id = instructor_id
+    @approved.setter
+    def approved(self, approved):
+        self._approved = approved
+
+
+# Create a lesson object
+
+class Lesson:
+
+    def __init__(self, id):
+        self._lesson_id = id
+        self._day = None
+        self._start_time = None
+        self._end_time = id
+        self._location = None
+        self._maximum = None
+        self._info = None
+        self._level = None
+
+    # Getters
+    @property
+    def lesson_id(self):
+        return self._lesson_id
+
+    @property
+    def day(self):
+        return self._day
+
+    @property
+    def start_time(self):
+        return self._start_time
+
+    @property
+    def end_time(self):
+        return self._end_time
+
+    @property
+    def location(self):
+        return self._location
+
+    @property
+    def maximum(self):
+        return self._maximum
+
+    @property
+    def info(self):
+        return self._info
+
+    @property
+    def level(self):
+        return self._level
+
+    # ------------- Setters -------------
+
+    @lesson_id.setter
+    def lesson_id(self, lesson_id):
+        self._lesson_id = lesson_id
+
+    @day.setter
+    def day(self, day):
+        self._day = day
+
+    @start_time.setter
+    def start_time(self, start_time):
+        self._start_time = start_time
+
+    @end_time.setter
+    def end_time(self, end_time):
+        self._end_time = end_time
 
     @location.setter
     def location(self, location):
         self._location = location
 
-def conv_id_obj(id):
-    where_parameter = (str(id), )
+    @maximum.setter
+    def maximum(self, maximum):
+        self._maximum = maximum
+
+
+    @info.setter
+    def info(self, info):
+        self._info = info
+
+    @level.setter
+    def level(self, level):
+        self._level = level
+
+
+def calc_date_between(start, end):
+
+    if end == "now":
+        end = datetime.utcnow()
+
+    try:
+        start = start.date()
+    except:
+        print("Start date is already in date form")
+
+    try:
+        end = end.date()
+    except:
+        print("End date is already in date form")
+    diff = relativedelta(end, start)
+    years = diff.years
+    months = diff.months
+    days = diff.days
+
+    Date_in_form = date(years, months, days)
+
+    return  Date_in_form, years, months, days
+
+
+def conv_accountid_obj(id):
+    where_parameter = (str(id),)
     sql_fetch_all_accounts = "SELECT * FROM accounts WHERE id = %s"
     sql_fetch_all_users = "SELECT * FROM users WHERE user_id = %s"
     mycursor.execute(sql_fetch_all_accounts, where_parameter)
@@ -419,12 +590,31 @@ def conv_id_obj(id):
     current.belt_id = user_data[0][1]
     current.first_name = user_data[0][2]
     current.last_name = user_data[0][3]
-    current.last_graded = user_data[0][4]
-
+    current.last_graded = user_data[0][5]
+    current.age = user_data[0][4]
     return current
 
+
+def conv_beltid_name(id):
+    get_name = "SELECT belt_name FROM belts WHERE belt_id = %s"
+    id_str = (str(id),)
+    mycursor.execute(get_name, id_str)
+    belt_name = mycursor.fetchone()
+    return belt_name[0]
+
+
+def conv_date_day(date):
+    date = calendar.day_name[date.weekday()]
+    return date
+
+
+def conv_date_string(date):
+    date_string = date[0:16]
+    return date_string
+
+
 # Function to update an account object to the database
-def update_to_db(account):
+def update_account_to_db(account):
     try:
         accounts_id = account.id
         accounts_email = account.email
@@ -466,11 +656,12 @@ def insert_account_into_db(account):
         users_age = account.age
         foreign_belt_id = account.belt_id
         users_last_graded = account.last_graded
+        account_approved = account.approved
 
         sql_insert_into_accounts = "INSERT INTO accounts (id, user_id ,email, password_hash, authority, " \
-                                   "last_logged_in, date_added) VALUES (%s, %s, %s, %s, %s, %s, %s) "
+                                   "last_logged_in, date_added, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
         accountValues = (accounts_id, foreign_user_id, accounts_email, accounts_password_hash, accounts_authority,
-                         accounts_last_logged_in, accounts_date_added)
+                         accounts_last_logged_in, accounts_date_added, account_approved)
 
         sql_insert_into_users = "INSERT INTO users (user_id, first_name, last_name, age, belt_id,last_graded) VALUES " \
                                 "(%s, %s, %s, %s, %s, %s) "
@@ -484,11 +675,25 @@ def insert_account_into_db(account):
     except mysql.connector.Error as error:
         print(error.msg)
 
+def insert_lesson_into_db(lesson):
+    try:
+
+        sql_insert_into_lessons = "INSERT INTO lessons (lesson_id, day , start_time, end_time, location, " \
+                                   "maximum, info, level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+        lessonvalues = (lesson.lesson_id, lesson.day, lesson.start_time, lesson.end_time, lesson.location,
+                         lesson.maximum, lesson.info, lesson.level)
+
+        mycursor.execute(sql_insert_into_lessons, lessonvalues)
+
+
+        mydb.commit()
+
+    except mysql.connector.Error as error:
+        print(error.msg)
 
 # ======================================================================================================================
-# Decorators
+# Decorators - Main Website
 # ======================================================================================================================
-
 
 # Create a route decorator
 @app.route('/')
@@ -504,22 +709,23 @@ def login():
     if form.validate_on_submit():
         try:
             find_account = "SELECT id FROM accounts WHERE email = %s"
-            where_condition = (form.email.data, )
-            mycursor.execute(find_account,where_condition)
+            where_condition = (form.email.data,)
+            mycursor.execute(find_account, where_condition)
             login_id = mycursor.fetchone()
-            account_data_all = conv_id_obj(login_id[0])
+            account_data_all = conv_accountid_obj(login_id[0])
 
             # Check Hashed Password with inputted one
             if check_password_hash(account_data_all.password_hash, form.password.data):
                 flash("Login Successful!", "success")
                 session['user'] = account_data_all.__dict__
+                session['manage_user'] = None
+                session['user']['_date_added'] = session['user']['_date_added']
                 return redirect(url_for('dashboard'))
             else:
                 flash("Wrong Password or Username. Try Again...", category="danger_below")
         except:
             print("account doesn't exist")
             flash("Wrong Password or Username. Try Again...", category="danger_below")
-
     return render_template('login.html', form=form)
 
 
@@ -527,8 +733,8 @@ def login():
 @app.route('/logout', methods=['GET', 'POST'])
 # LOG IN REQUIRED
 def logout():
+    session['user'] = None
 
-    session['user'] == None
     flash("You Have been logged out!", "info")
     return render_template('index.html')
 
@@ -539,62 +745,77 @@ def logout():
 def dashboard():
     belt_id = session['user']['_belt_id']
     belt_name_q = "SELECT belt_name FROM belts WHERE belt_id = %s"
-    belt_id = (belt_id, )
+    belt_id = (belt_id,)
     mycursor.execute(belt_name_q, belt_id)
     belt_name = mycursor.fetchall()
-    return render_template('dashboard.html', belt_name = belt_name[0][0])
+    date_added = conv_date_string(session['user']['_date_added'])
+    return render_template('dashboard.html', belt_name=belt_name[0][0], date_added=date_added)
 
-@app.route('/create/student', methods=['GET', 'POST'])
+
+# ======================================================================================================================
+# Accounts
+# ======================================================================================================================
+
+@app.route('/account/create', methods=['GET', 'POST'])
 def create_student():
-    form = NewStudentForm()
-    account = None
+    if session['manage_user'] is None:
 
-    if form.validate_on_submit():
-        search_account_statement = "SELECT * FROM accounts WHERE email = %(email)s"
-        parameter = {'email': form.email.data}
-        mycursor.execute(search_account_statement, parameter)
-        account = mycursor.fetchone()
+        form = NewStudentForm()
+        account = None
 
-        if account is None:
-            mycursor.execute("SELECT id FROM accounts ORDER BY id DESC")
+        if form.validate_on_submit():
+            search_account_statement = "SELECT * FROM accounts WHERE email = %(email)s"
+            parameter = {'email': form.email.data}
+            mycursor.execute(search_account_statement, parameter)
+            account = mycursor.fetchone()
 
-            next_id = mycursor.fetchone()
-            try:
-                new_id = int(next_id[0]) + 1
+            if account is None:
+                mycursor.execute("SELECT id FROM accounts ORDER BY id DESC")
 
-            except:
-                new_id = 1
-            new_account = Account(new_id)
+                next_id = mycursor.fetchone()
+                try:
+                    new_id = int(next_id[0]) + 1
 
-            # Hash password
-            hashed_pw = generate_password_hash(form.password.data, "sha256")
-            # find belt in database
-            new_account.email = form.email.data
-            new_account.first_name = form.first_name.data
-            new_account.last_name = form.last_name.data
-            new_account.belt_id = form.belt_id.data
-            new_account.authority = form.authority.data
-            new_account.age = form.age.data
-            new_account.date_added = date.utcnow()
-            new_account.password_hash = hashed_pw
-            new_account.last_logged_in = datetime.utcnow()
-            new_account.last_graded = date.utcnow()
-            insert_account_into_db(new_account)
+                except:
+                    new_id = 1
+                new_account = Account(new_id)
 
-            flash("User Added Successfully!", 'success')
-            return redirect(url_for('account_details', id=new_account.id))
+                # Hash password
+                hashed_pw = generate_password_hash(form.password.data, "sha256")
+                # find belt in database
+                current_date = datetime.utcnow()
+                current_date = current_date.date()
+                new_account.email = form.email.data
+                new_account.first_name = form.first_name.data
+                new_account.last_name = form.last_name.data
+                new_account.belt_id = form.belt_id.data
+                new_account.authority = form.authority.data
+                new_account.age = form.age.data
+                new_account.date_added = current_date
+                new_account.password_hash = hashed_pw
+                new_account.last_logged_in = current_date
+                new_account.last_graded = current_date
+                new_account.approved = True
+                insert_account_into_db(new_account)
+                session['manage_user'] = new_account.__dict__
+                belt_name = conv_beltid_name(session['manage_user']['_belt_id'])
+                session['belt_name'] = belt_name
+                flash("User Added Successfully!", 'success')
+                return redirect(url_for('create_student'))
 
-        form.first_name.data = ''
-        form.last_name.data = ''
-        form.email.data = ''
-        form.belt_id.data = ''
-        form.authority.data = ''
-        form.password.data = ''
-        form.password_match.data = ''
-        form.age.data = ''
+            form.first_name.data = ''
+            form.last_name.data = ''
+            form.email.data = ''
+            form.belt_id.data = ''
+            form.authority.data = ''
+            form.password.data = ''
+            form.password_match.data = ''
+            form.age.data = ''
 
-    return render_template("create_student.html",
-                           form=form)
+        return render_template("create_student.html",
+                               form=form)
+    else:
+        return render_template("create_student.html")
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -632,10 +853,11 @@ def signup():
             new_account.password_hash = hashed_pw
             new_account.last_logged_in = datetime.utcnow()
             new_account.last_graded = datetime.utcnow()
-#            new_account.approved = True
+            new_account.approved = True
             insert_account_into_db(new_account)
 
-            flash("Account request Successful! Please wait for the account to be approved by your instructor.", 'success')
+            flash("Account request Successful! Please wait for the account to be approved by your instructor.",
+                  'success')
             return redirect(url_for('index'))
 
         form.first_name.data = ''
@@ -649,7 +871,7 @@ def signup():
                            form=form)
 
 
-@app.route('/delete/account/<int:id>')
+@app.route('/account/delete/')
 def delete_account(id):
     account_to_delete = Accounts.query.get_or_404(id)
     try:
@@ -663,8 +885,8 @@ def delete_account(id):
         return redirect(url_for('account_details', id=id))
 
 
-@app.route('/edit/account/<int:id>', methods=['GET', 'POST'])
-def edit_account(id):
+@app.route('/account/edit/', methods=['GET', 'POST'])
+def edit_account():
     account = Accounts.query.get_or_404(id)
     form = EditStudentForm()
     if form.validate_on_submit():
@@ -690,11 +912,76 @@ def edit_account(id):
     return render_template('edit_account.html', form=form)
 
 
-@app.route('/account/<int:id>', methods=['GET', 'POST'])
-def account_details(id):
-    account = Account(id)
-    return render_template("account.html",
-                           account=account)
+@app.route('/account/check', methods=['GET', 'POST'])
+def account_details():
+    return render_template("account.html")
+
+
+# ======================================================================================================================
+# Lessons
+# ======================================================================================================================
+
+
+@app.route('/create/lesson', methods=['GET', 'POST'])
+def create_lesson():
+
+    form = NewLessonForm()
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    if form.validate_on_submit():
+        if form.validate_times(form.lesson_start.data, form.lesson_end.data):
+            search_lessons_statement = "SELECT day, start_time, lesson_id, location FROM lessons WHERE start_time = %(start_time)s AND day = %(day)s and location = %(location)s"
+            parameter = {'start_time': form.lesson_start.data, 'day': form.day.data, 'location': form.location.data}
+            mycursor.execute(search_lessons_statement, parameter)
+            lesson = mycursor.fetchone()
+
+
+
+            if lesson is None:
+                mycursor.execute("SELECT lesson_id FROM lessons ORDER BY lesson_id DESC")
+                next_id = mycursor.fetchone()
+
+                try:
+                    new_id = int(next_id[0]) + 1
+                except:
+                    new_id = 1
+
+                new_lesson = Lesson(new_id)
+
+                new_lesson.day = form.day.data
+                new_lesson.start_time = form.lesson_start.data
+                new_lesson.end_time = form.lesson_end.data
+                new_lesson.location = form.location.data
+                new_lesson.maximum = form.maximum.data
+                new_lesson.info = form.information.data
+                new_lesson.level = form.level.data
+
+                insert_lesson_into_db(new_lesson)
+
+                flash("Lesson created Successfully!", 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash("WARNING. There is already a lesson booked at this location for this slot.", "warning")
+
+            form.day.data = ''
+            form.lesson_start.data = ''
+            form.lesson_end.data = ''
+            form.location.data = ''
+            form.maximum.data = ''
+            form.information.data = ''
+            form.level.data = ''
+
+        else:
+            flash("End time must be after the start time.", "danger")
+
+    return render_template("create_lesson.html",
+                           form=form)
 
 
 # ======================================================================================================================
@@ -706,7 +993,16 @@ def account_details(id):
 def page_not_found(e):
     return render_template("404.html")
 
+# test = conv_accountid_obj(1).__dict__
+# test2 = conv_accountid_obj(2).__dict__
+# dict  = [test,test2]
+# test3 = dict
+# for x in dict:
+#    print(x)
+#    print(x['_email'])
+
 # Run the App
 if __name__ == '__main__':
     app.run()
 
+webbrowser.open('http://127.0.0.1:5000/')
