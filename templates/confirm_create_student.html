@@ -1,5 +1,6 @@
 {% extends 'base.html'  %}
 {% block content %}
+     <div class="container">
 
 {% for message in get_flashed_messages(category_filter=["success"]) %}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -63,4 +64,5 @@
     <a href="{{url_for('edit_create_student')}}" class = "btn btn-secondary btn">Edit</a>
     <a href="{{url_for('create_student')}}" class = "btn btn-danger btn">Cancel</a>
 
+     </div>
 {% endblock %}

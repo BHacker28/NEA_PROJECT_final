@@ -941,8 +941,6 @@ def create_lesson():
             mycursor.execute(search_lessons_statement, parameter)
             lesson = mycursor.fetchone()
 
-
-
             if lesson is None:
                 mycursor.execute("SELECT lesson_id FROM lessons ORDER BY lesson_id DESC")
                 next_id = mycursor.fetchone()
@@ -984,6 +982,21 @@ def create_lesson():
                            form=form)
 
 
+@app.route('/book/location', methods=['GET', 'POST'])
+def location_choice():
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+
+    return render_template("choose_location.html")
+
+
 # ======================================================================================================================
 # Error Handlers
 # ======================================================================================================================
@@ -1003,6 +1016,6 @@ def page_not_found(e):
 
 # Run the App
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 webbrowser.open('http://127.0.0.1:5000/')

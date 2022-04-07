@@ -1,5 +1,6 @@
 {% extends 'base.html'  %}
 {% block content %}
+     <div class="container">
 
 {% for message in get_flashed_messages() %}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -63,4 +64,5 @@
         <br/><br/><br/>
 
     {% endif %}
+     </div>
 {% endblock %}
