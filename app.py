@@ -139,6 +139,7 @@ TABLES = {'BELTS': '''CREATE TABLE BELTS(
                       FOREIGN KEY (user_id) REFERENCES Users(user_id));''', 'LESSONS': '''CREATE TABLE LESSONS(
                      lesson_id int AUTO_INCREMENT,
                      day char(10) NOT NULL,
+                     day_index int NOT NULL,
                      start_time TIME NOT NULL,
                      end_time TIME NOT NULL,
                      location char(50),
@@ -470,6 +471,7 @@ class Lesson:
     def __init__(self, id):
         self._lesson_id = id
         self._day = None
+        self._day_index = None
         self._start_time = None
         self._end_time = id
         self._location = None
@@ -485,6 +487,10 @@ class Lesson:
     @property
     def day(self):
         return self._day
+
+    @property
+    def day_index(self):
+        return self._day_index
 
     @property
     def start_time(self):
@@ -519,6 +525,10 @@ class Lesson:
     @day.setter
     def day(self, day):
         self._day = day
+
+    @day_index.setter
+    def day_index(self, day_index):
+        self._day_index = day_index
 
     @start_time.setter
     def start_time(self, start_time):
@@ -678,9 +688,9 @@ def insert_account_into_db(account):
 def insert_lesson_into_db(lesson):
     try:
 
-        sql_insert_into_lessons = "INSERT INTO lessons (lesson_id, day , start_time, end_time, location, " \
-                                   "maximum, info, level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
-        lessonvalues = (lesson.lesson_id, lesson.day, lesson.start_time, lesson.end_time, lesson.location,
+        sql_insert_into_lessons = "INSERT INTO lessons (lesson_id, day ,day_index, start_time, end_time, location, " \
+                                   "maximum, info, level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        lessonvalues = (lesson.lesson_id, lesson.day,lesson.day_index, lesson.start_time, lesson.end_time, lesson.location,
                          lesson.maximum, lesson.info, lesson.level)
 
         mycursor.execute(sql_insert_into_lessons, lessonvalues)
@@ -696,7 +706,7 @@ def insert_lesson_into_db(lesson):
 # ======================================================================================================================
 
 # Create a route decorator
-@app.route('/')
+@app.route('/', methods=['GET','POST'])
 def index():  # Opening Page
     session['user'] = None
     return render_template("index.html")
@@ -758,6 +768,18 @@ def dashboard():
 
 @app.route('/account/create', methods=['GET', 'POST'])
 def create_student():
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
     if session['manage_user'] is None:
 
         form = NewStudentForm()
@@ -928,6 +950,10 @@ def create_lesson():
     form = NewLessonForm()
     try:
         account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
 
     except:
 
@@ -960,6 +986,8 @@ def create_lesson():
                 new_lesson.info = form.information.data
                 new_lesson.level = form.level.data
 
+                days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                new_lesson.day_index = days.index(form.day.data)
                 insert_lesson_into_db(new_lesson)
 
                 flash("Lesson created Successfully!", 'success')
@@ -982,7 +1010,7 @@ def create_lesson():
                            form=form)
 
 
-@app.route('/book/location', methods=['GET', 'POST'])
+@app.route('/book/wincaton', methods=['GET', 'POST'])
 def location_choice():
 
     try:
@@ -994,7 +1022,41 @@ def location_choice():
         return redirect(url_for('login'))
 
 
-    return render_template("choose_location.html")
+    return render_template("location_choice.html")
+
+@app.route('/book/wincanton', methods=['GET', 'POST'])
+def location_wincanton():
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT * FROM lessons WHERE location = 'wincanton' ORDER BY day_index "
+    mycursor.execute(get_bookings)
+    all_lessons = mycursor.fetchall()
+    print(all_lessons[0][2])
+    total = len(all_lessons)
+    rows = total % 3
+    print(all_lessons)
+    return render_template("location_wincanton.html", lessons=all_lessons, rows=rows)
+
+@app.route('/book/lesson/<id>', methods=['GET', 'POST'])
+def book_lesson(id):
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    print("This is a test, the id is {}".format(id))
+    return render_template("dashboard.html")
 
 
 # ======================================================================================================================
