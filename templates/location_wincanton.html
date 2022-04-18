@@ -3,14 +3,14 @@
 
 
       <div class="row-sm g-6 border border-2 p-3 bg-white" style="background-size: cover; padding-top: 200px; text-align: center;">
-        <div class="container" style="background-color: rgb(33,37,41); border-radius: 30px">
+        <div class="container" style="background-color: white; border-radius: 30px">
        <br/>
-            <h1 style="color: whitesmoke"><u><b>Lessons</b></u></h1>
+            <h1 style="color: dark"><u><b>Lessons</b></u></h1>
         <br/><br/>
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for lesson in lessons %}
   <div class="col">
-    <div class="card" style="border-radius: 30px">
+    <div class="card shadow p-3 mb-5 rounded" style="border-radius: 30px">
       <div class="card-body">
           <h5 class="card-title"><u>{{ lesson[1] }}</u></h5>
           <p class="card-text"><b>Time</b> </br> {{ lesson[3] }} - {{ lesson[4] }}
@@ -21,7 +21,7 @@
           </br>
 
           </p>
-          <a href="{{url_for('book_lesson', id=lesson[0])}}"> <button style="font-size: 25px; padding-bottom: 10px;padding-left: 20px;padding-right: 20px; border-radius: 40px" type="button" class="btn btn-primary ">  Book</button></a>
+          <a href="{{url_for('book_lesson', id=lesson[0])}}"> <button style="font-size: 25px; padding-bottom: 10px;padding-left: 20px;padding-right: 20px; border-radius: 40px" type="button" class="btn btn-primary shadow-sm p-3 mb-5 ">  Book</button></a>
       </div>
     </div>
   </div>
@@ -30,4 +30,9 @@
       <br/><br/><br/>
         </div>
       </div>
+
+    {% block modal %} {% endblock %}
+
+    {% block script %} {% endblock %}
+
 {% endblock %}

@@ -1010,7 +1010,7 @@ def create_lesson():
                            form=form)
 
 
-@app.route('/book/wincaton', methods=['GET', 'POST'])
+@app.route('/book/location', methods=['GET', 'POST'])
 def location_choice():
 
     try:
@@ -1024,7 +1024,7 @@ def location_choice():
 
     return render_template("location_choice.html")
 
-@app.route('/book/wincanton', methods=['GET', 'POST'])
+@app.route('/book/location/wincanton', methods=['GET', 'POST'])
 def location_wincanton():
 
     try:
@@ -1037,12 +1037,42 @@ def location_wincanton():
 
     get_bookings = "SELECT * FROM lessons WHERE location = 'wincanton' ORDER BY day_index "
     mycursor.execute(get_bookings)
-    all_lessons = mycursor.fetchall()
-    print(all_lessons[0][2])
-    total = len(all_lessons)
-    rows = total % 3
-    print(all_lessons)
-    return render_template("location_wincanton.html", lessons=all_lessons, rows=rows)
+    lessons = mycursor.fetchall()
+    lessons = list(lessons)
+
+    # create variable and list used in loop
+    count = 0
+    lesson_list = []
+
+    for lesson in lessons:
+
+        lesson = list(lesson)
+        time_delta = lesson[3]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds//60) - (hours*60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours,minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[3] = time
+
+        time_delta = lesson[4]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[4] = time
+        lesson_list.append(lesson)
+        count += 1
+
+    lessons = tuple(lesson_list)
+    return render_template("location_wincanton.html", lessons=lessons)
 
 @app.route('/book/lesson/<id>', methods=['GET', 'POST'])
 def book_lesson(id):
@@ -1055,8 +1085,10 @@ def book_lesson(id):
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    print("This is a test, the id is {}".format(id))
-    return render_template("dashboard.html")
+    get_bookings = "SELECT * FROM lessons WHERE location = 'wincanton' ORDER BY day_index "
+    mycursor.execute(get_bookings)
+    lessons = mycursor.fetchall()
+    return render_template("book_overlay_wincanton.html",lessons=lessons)
 
 
 # ======================================================================================================================
