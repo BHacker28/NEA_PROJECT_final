@@ -1,4 +1,4 @@
-{% extends 'location_wincanton.html' %}
+{% extends 'location_merriot.html' %}
     {% block modal %}
 
 
@@ -8,7 +8,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="staticBackdropLabel">{{ info['_day'] }}</h5>
-        <a href="{{ url_for('location_wincanton') }}" type="button" class="btn-close" aria-label="Close"></a>
+        <a href="{{ url_for('location_merriot') }}" type="button" class="btn-close" aria-label="Close"></a>
       </div>
       <div class="modal-body">
   <h5> {{ info['_start_time'] }} - {{ info['_end_time'] }}</h5>
@@ -18,7 +18,7 @@
   <p>{{ info['_info'] }}</p>
       </div>
       <div class="modal-footer">
-        <a href="{{ url_for('location_wincanton') }}" type="button" class="btn btn-secondary">Cancel Booking</a>
+        <a href="{{ url_for('location_merriot') }}" type="button" class="btn btn-secondary">Cancel Booking</a>
          <form method="POST">
      {{ form.hidden_tag() }}
       <div class="col-12">

@@ -6,8 +6,8 @@
         <div class="container" style="background-color: white; border-radius: 30px">
        <br/>
             <h1><u><b>Lessons</b></u></h1>
-            <h2><b>Wincanton</b></h2>
-        </br><a href="{{url_for('location_choice')}}"> <button style="font-size: 25px; padding-bottom: 10px;padding-left: 20px;padding-right: 20px; border-radius: 40px" type="button" class="btn btn-warning ">View Locations</button></a>
+            <h2><b>Queen Camel</b></h2></br>
+        <a href="{{url_for('location_choice')}}"> <button style="font-size: 25px; padding-bottom: 10px;padding-left: 20px;padding-right: 20px; border-radius: 40px" type="button" class="btn btn-warning ">View Locations</button></a>
         <br/><br/>
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for lesson in lessons %}
@@ -23,7 +23,7 @@
           </br>
 
           </p>
-          <a href="{{url_for('book_lesson_wincanton', id=lesson[0])}}"> <button style="font-size: 25px; padding-top: 20px; padding-bottom: 20px;padding-left: 50px;padding-right: 50px; border-radius: 40px; width: 300px" type="button" class="btn btn-primary shadow-sm p-3 mb-5 ">Book</button></a>
+          <a href="{{url_for('book_lesson_queen_camel', id=lesson[0])}}"> <button style="font-size: 25px; padding-top: 20px; padding-bottom: 20px;padding-left: 50px;padding-right: 50px; border-radius: 40px; width: 300px" type="button" class="btn btn-primary shadow-sm p-3 mb-5 ">Book</button></a>
       </div>
     </div>
   </div>

@@ -4,7 +4,7 @@ from wtforms import StringField, SubmitField, PasswordField, BooleanField, Valid
     validators, TimeField
 from wtforms.validators import DataRequired, EqualTo, Length, NoneOf, NumberRange
 from wtforms.widgets import TextArea
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.widgets import TextArea
 import yaml
@@ -13,7 +13,7 @@ from mysql.connector import errorcode
 from dateutil.relativedelta import relativedelta
 import webbrowser
 import calendar
-
+from Classes import Account, Lesson
 
 
 # dictionary of account in a session takes form:
@@ -208,7 +208,7 @@ def table_check(cursor):
             cursor.execute(table_sql_statement)
             mydb.commit()
             table_count += 1
-            #checks each table to name for required table which needs filling
+            # checks each table to name for required table which needs filling
             if table_name == "BELTS":
                 mycursor.execute(Belt_lookup_table)
                 mydb.commit()
@@ -243,6 +243,10 @@ app.config['SECRET_KEY'] = db['app_secret_key']
 
 
 # Create Login Form
+
+class ConfirmForm(FlaskForm):
+    submit = SubmitField("Confirm")
+
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])
@@ -337,225 +341,6 @@ class NewLessonForm(FlaskForm):
             return True
 
 
-
-# Create account object
-class Account:
-
-    def __init__(self, id):
-        self._id = id
-        self._email = None
-        self._password_hash = None
-        self._user_id = id
-        self._authority = None
-        self._last_logged_in = None
-        self._date_added = None
-        self._first_name = None
-        self._last_name = None
-        self._age = None
-        self._belt_id = None
-        self._last_graded = None
-        self._approved = None
-
-    # Getters
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def email(self):
-        return self._email
-
-    @property
-    def password_hash(self):
-        return self._password_hash
-
-    @property
-    def user_id(self):
-        return self._user_id
-
-    @property
-    def authority(self):
-        return self._authority
-
-    @property
-    def last_logged_in(self):
-        return self._last_logged_in
-
-    @property
-    def date_added(self):
-        return self._date_added
-
-    @property
-    def first_name(self):
-        return self._first_name
-
-    @property
-    def last_name(self):
-        return self._last_name
-
-    @property
-    def age(self):
-        return self._age
-
-    @property
-    def belt_id(self):
-        return self._belt_id
-
-    @property
-    def last_graded(self):
-        return self._last_graded
-
-    @property
-    def approved(self):
-        return self._approved
-
-    # ------------- Setters -------------
-
-    @id.setter
-    def id(self, id):
-        self._id = id
-
-    @email.setter
-    def email(self, email):
-        self._email = email
-
-    @password_hash.setter
-    def password_hash(self, password_hash):
-        self._password_hash = password_hash
-
-    @user_id.setter
-    def user_id(self, user_id):
-        self._user_id = user_id
-
-    @authority.setter
-    def authority(self, authority):
-        self._authority = authority
-
-    @last_logged_in.setter
-    def last_logged_in(self, last_logged_in):
-        self._last_logged_in = last_logged_in
-
-    @date_added.setter
-    def date_added(self, date_added):
-        self._date_added = date_added
-
-    @first_name.setter
-    def first_name(self, first_name):
-        self._first_name = first_name
-
-    @last_name.setter
-    def last_name(self, last_name):
-        self._last_name = last_name
-
-    @age.setter
-    def age(self, age):
-        self._age = age
-
-    @belt_id.setter
-    def belt_id(self, belt_id):
-        self._belt_id = belt_id
-
-    @last_graded.setter
-    def last_graded(self, last_graded):
-        self._last_graded = last_graded
-
-    @approved.setter
-    def approved(self, approved):
-        self._approved = approved
-
-
-# Create a lesson object
-
-class Lesson:
-
-    def __init__(self, id):
-        self._lesson_id = id
-        self._day = None
-        self._day_index = None
-        self._start_time = None
-        self._end_time = id
-        self._location = None
-        self._maximum = None
-        self._info = None
-        self._level = None
-
-    # Getters
-    @property
-    def lesson_id(self):
-        return self._lesson_id
-
-    @property
-    def day(self):
-        return self._day
-
-    @property
-    def day_index(self):
-        return self._day_index
-
-    @property
-    def start_time(self):
-        return self._start_time
-
-    @property
-    def end_time(self):
-        return self._end_time
-
-    @property
-    def location(self):
-        return self._location
-
-    @property
-    def maximum(self):
-        return self._maximum
-
-    @property
-    def info(self):
-        return self._info
-
-    @property
-    def level(self):
-        return self._level
-
-    # ------------- Setters -------------
-
-    @lesson_id.setter
-    def lesson_id(self, lesson_id):
-        self._lesson_id = lesson_id
-
-    @day.setter
-    def day(self, day):
-        self._day = day
-
-    @day_index.setter
-    def day_index(self, day_index):
-        self._day_index = day_index
-
-    @start_time.setter
-    def start_time(self, start_time):
-        self._start_time = start_time
-
-    @end_time.setter
-    def end_time(self, end_time):
-        self._end_time = end_time
-
-    @location.setter
-    def location(self, location):
-        self._location = location
-
-    @maximum.setter
-    def maximum(self, maximum):
-        self._maximum = maximum
-
-
-    @info.setter
-    def info(self, info):
-        self._info = info
-
-    @level.setter
-    def level(self, level):
-        self._level = level
-
-
 def calc_date_between(start, end):
 
     if end == "now":
@@ -602,6 +387,25 @@ def conv_accountid_obj(id):
     current.last_name = user_data[0][3]
     current.last_graded = user_data[0][5]
     current.age = user_data[0][4]
+    return current
+
+
+def conv_lessonid_obj(id):
+    where_parameter = (str(id),)
+    sql_fetch_all_lessons = "SELECT * FROM lessons WHERE lesson_id = %s"
+    mycursor.execute(sql_fetch_all_lessons, where_parameter)
+    lessons_data = mycursor.fetchall()
+    current = Lesson(id)
+
+    current.day = lessons_data[0][1]
+    current.day_index = lessons_data[0][2]
+    current.start_time = lessons_data[0][3]
+    current.end_time = lessons_data[0][4]
+    current.location = lessons_data[0][5]
+    current.maximum = lessons_data[0][6]
+    current.info = lessons_data[0][7]
+    current.level = lessons_data[0][8]
+
     return current
 
 
@@ -700,6 +504,37 @@ def insert_lesson_into_db(lesson):
 
     except mysql.connector.Error as error:
         print(error.msg)
+
+
+
+def book_into_lesson(lesson_id,user_id, date_to_book):
+    try:
+        print("test1")
+        mycursor.execute("SELECT booking_id FROM bookings ORDER BY booking_id DESC")
+        print("2")
+        next_id = mycursor.fetchone()
+        print("3")
+
+        try:
+            new_id = int(next_id[0]) + 1
+        except:
+            new_id = 1
+
+        sql_insert_into_bookings = "INSERT INTO bookings (booking_id, user_id ,lesson_id, date) VALUES (%s, %s, %s, %s)"
+        print("4")
+        booking_values = (new_id, user_id, int(lesson_id), date_to_book)
+        print("5")
+
+        mycursor.execute(sql_insert_into_bookings, booking_values)
+        print("6")
+
+        mydb.commit()
+        print("7")
+
+    except mysql.connector.Error as error:
+        print("failed")
+        print(error.msg)
+
 
 # ======================================================================================================================
 # Decorators - Main Website
@@ -1024,6 +859,12 @@ def location_choice():
 
     return render_template("location_choice.html")
 
+
+# ======================================================================================================================
+# Wincanton
+# ======================================================================================================================
+
+
 @app.route('/book/location/wincanton', methods=['GET', 'POST'])
 def location_wincanton():
 
@@ -1036,6 +877,199 @@ def location_wincanton():
         return redirect(url_for('login'))
 
     get_bookings = "SELECT * FROM lessons WHERE location = 'wincanton' ORDER BY day_index "
+    mycursor.execute(get_bookings)
+    lessons = mycursor.fetchall()
+    lessons = list(lessons)
+
+    # create variable and list used in loop
+    count = 0
+    lesson_list = []
+
+    for lesson in lessons:
+
+        lesson = list(lesson)
+        time_delta = lesson[3]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds//60) - (hours*60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[3] = time
+
+        time_delta = lesson[4]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[4] = time
+        lesson_list.append(lesson)
+        count += 1
+
+    lessons = tuple(lesson_list)
+    return render_template("location_wincanton.html", lessons=lessons)
+
+
+@app.route('/book/location/wincanton/<id>', methods=['GET', 'POST'])
+def book_lesson_wincanton(id):
+    form = ConfirmForm()
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT * FROM lessons WHERE location = 'wincanton' ORDER BY day_index "
+    mycursor.execute(get_bookings)
+    lessons = mycursor.fetchall()
+    lessons = list(lessons)
+    book_into = conv_lessonid_obj(id)
+    booking_information = book_into.__dict__
+
+    time_delta = booking_information['_start_time']
+    seconds = time_delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds // 60) - (hours * 60)
+
+    if minutes < 10:
+        time = "{}:{}0".format(hours, minutes)
+    else:
+        time = "{}:{}".format(hours, minutes)
+
+    booking_information['_start_time'] = time
+
+    time_delta = booking_information['_end_time']
+    seconds = time_delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds // 60) - (hours * 60)
+
+    if minutes < 10:
+        time = "{}:{}0".format(hours, minutes)
+    else:
+        time = "{}:{}".format(hours, minutes)
+
+    booking_information['_end_time'] = time
+
+
+
+
+    print(booking_information)
+    # create variable and list used in loop
+    count = 0
+    lesson_list = []
+
+    for lesson in lessons:
+
+        lesson = list(lesson)
+        time_delta = lesson[3]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[3] = time
+
+        time_delta = lesson[4]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[4] = time
+        lesson_list.append(lesson)
+        count += 1
+    lessons = tuple(lesson_list)
+
+    if form.validate_on_submit():
+        book_into = conv_lessonid_obj(id)
+        today_date = date.today()
+
+        today_index = datetime.today().isoweekday()
+        today_index -= 1
+        diff_today_booking = int(book_into.day_index) - int(today_index)
+        date_to_book = today_date + timedelta(days=diff_today_booking)
+        number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
+
+        parameter = {'lesson_id': book_into.lesson_id, 'date': today_date}
+        mycursor.execute(number_in_lesson,parameter)
+        database_output = mycursor.fetchall()
+        current_total = len(database_output)
+        new_total = current_total + 1
+
+
+        if diff_today_booking < 0:
+            flash("This class has already happened this week. Please try booking for a different class.", "danger")
+            return redirect(url_for("location_wincanton"))
+        if diff_today_booking == 0:
+            today = datetime.now()
+            time = book_into.start_time
+
+            seconds = time.seconds
+            hours = seconds // 3600
+            minutes = (seconds // 60) - (hours * 60)
+            seconds = seconds - ((minutes * 60) + (hours * 3600))
+            year = today.year
+            month = today.month
+            day = today.day
+
+            lesson_datetime = datetime(year, month, day, hours, minutes, seconds)
+            time_diff = lesson_datetime - today
+
+            if time_diff.days < 0:
+                flash("This class has already happened. Please try booking for a different class.", "danger")
+                return redirect(url_for("location_wincanton"))
+
+        if new_total < book_into.maximum:
+            already_booked = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s AND user_id " \
+                             "= %(user_id)s "
+            parameter_2 = {'lesson_id': book_into.lesson_id, 'date': date_to_book, 'user_id': session['user']['_id']}
+            mycursor.execute(already_booked, parameter_2)
+            check = mycursor.fetchone()
+
+            if check is None:
+                book_into_lesson(book_into.lesson_id, session['user']['_id'], date_to_book)
+
+            else:
+                flash("You are already booked into this class.", "warning")
+                return redirect(url_for("location_wincanton"))
+        else:
+            flash("Sorry, the class is full.", "warning")
+            return redirect(url_for("location_wincanton"))
+
+    return render_template("book_overlay_wincanton.html", lessons=lessons, form=form, info=booking_information)
+
+# ======================================================================================================================
+# Merriot
+# ======================================================================================================================
+
+
+@app.route('/book/location/Merriot', methods=['GET', 'POST'])
+def location_merriot():
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT * FROM lessons WHERE location = 'merriot' ORDER BY day_index "
     mycursor.execute(get_bookings)
     lessons = mycursor.fetchall()
     lessons = list(lessons)
@@ -1072,10 +1106,12 @@ def location_wincanton():
         count += 1
 
     lessons = tuple(lesson_list)
-    return render_template("location_wincanton.html", lessons=lessons)
+    return render_template("location_merriot.html", lessons=lessons)
 
-@app.route('/book/lesson/<id>', methods=['GET', 'POST'])
-def book_lesson(id):
+
+@app.route('/book/location/merriot/<id>', methods=['GET', 'POST'])
+def book_lesson_merriot(id):
+    form = ConfirmForm()
 
     try:
         account = conv_accountid_obj(session['user']['_id'])
@@ -1085,12 +1121,325 @@ def book_lesson(id):
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    get_bookings = "SELECT * FROM lessons WHERE location = 'wincanton' ORDER BY day_index "
+    get_bookings = "SELECT * FROM lessons WHERE location = 'merriot' ORDER BY day_index "
     mycursor.execute(get_bookings)
     lessons = mycursor.fetchall()
-    return render_template("book_overlay_wincanton.html",lessons=lessons)
+    lessons = list(lessons)
+    book_into = conv_lessonid_obj(id)
+    booking_information = book_into.__dict__
+
+    time_delta = booking_information['_start_time']
+    seconds = time_delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds // 60) - (hours * 60)
+
+    if minutes < 10:
+        time = "{}:{}0".format(hours, minutes)
+    else:
+        time = "{}:{}".format(hours, minutes)
+
+    booking_information['_start_time'] = time
+
+    time_delta = booking_information['_end_time']
+    seconds = time_delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds // 60) - (hours * 60)
+
+    if minutes < 10:
+        time = "{}:{}0".format(hours, minutes)
+    else:
+        time = "{}:{}".format(hours, minutes)
+
+    booking_information['_end_time'] = time
 
 
+
+
+    print(booking_information)
+    # create variable and list used in loop
+    count = 0
+    lesson_list = []
+
+    for lesson in lessons:
+
+        lesson = list(lesson)
+        time_delta = lesson[3]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[3] = time
+
+        time_delta = lesson[4]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[4] = time
+        lesson_list.append(lesson)
+        count += 1
+    lessons = tuple(lesson_list)
+
+    if form.validate_on_submit():
+        book_into = conv_lessonid_obj(id)
+        today_date = date.today()
+
+        today_index = datetime.today().isoweekday()
+        today_index -= 1
+        diff_today_booking = int(book_into.day_index) - int(today_index)
+        date_to_book = today_date + timedelta(days=diff_today_booking)
+        number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
+
+        parameter = {'lesson_id': book_into.lesson_id, 'date': today_date}
+        mycursor.execute(number_in_lesson,parameter)
+        database_output = mycursor.fetchall()
+        current_total = len(database_output)
+        new_total = current_total + 1
+
+
+        if diff_today_booking < 0:
+            flash("This class has already happened this week. Please try booking for a different class.", "danger")
+            return redirect(url_for("location_merriot"))
+        if diff_today_booking == 0:
+            today = datetime.now()
+            time = book_into.start_time
+
+            seconds = time.seconds
+            hours = seconds // 3600
+            minutes = (seconds // 60) - (hours * 60)
+            seconds = seconds - ((minutes * 60) + (hours * 3600))
+            year = today.year
+            month = today.month
+            day = today.day
+
+            lesson_datetime = datetime(year, month, day, hours, minutes, seconds)
+            time_diff = lesson_datetime - today
+
+            if time_diff.days < 0:
+                flash("This class has already happened. Please try booking for a different class.", "danger")
+                return redirect(url_for("location_merriot"))
+
+        if new_total < book_into.maximum:
+            already_booked = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s AND user_id " \
+                             "= %(user_id)s "
+            parameter_2 = {'lesson_id': book_into.lesson_id, 'date': date_to_book, 'user_id': session['user']['_id']}
+            mycursor.execute(already_booked, parameter_2)
+            check = mycursor.fetchone()
+
+            if check is None:
+                book_into_lesson(book_into.lesson_id, session['user']['_id'], date_to_book)
+
+            else:
+                flash("You are already booked into this class.", "warning")
+                return redirect(url_for("location_merriot"))
+        else:
+            flash("Sorry, the class is full.", "warning")
+            return redirect(url_for("location_merriot"))
+
+    return render_template("book_overlay_merriot.html", lessons=lessons, form=form, info=booking_information)
+
+
+# ======================================================================================================================
+# Queen Camel
+# ======================================================================================================================
+
+
+@app.route('/book/location/queencamel', methods=['GET', 'POST'])
+def location_queen_camel():
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT * FROM lessons WHERE location = 'queen camel' ORDER BY day_index "
+    mycursor.execute(get_bookings)
+    lessons = mycursor.fetchall()
+    lessons = list(lessons)
+
+    # create variable and list used in loop
+    count = 0
+    lesson_list = []
+
+    for lesson in lessons:
+
+        lesson = list(lesson)
+        time_delta = lesson[3]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds//60) - (hours*60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours,minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[3] = time
+
+        time_delta = lesson[4]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[4] = time
+        lesson_list.append(lesson)
+        count += 1
+
+    lessons = tuple(lesson_list)
+    print(lessons)
+    return render_template("location_queen_camel.html", lessons=lessons)
+
+
+@app.route('/book/location/queen_camel/<id>', methods=['GET', 'POST'])
+def book_lesson_queen_camel(id):
+    form = ConfirmForm()
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT * FROM lessons WHERE location = 'queen camel' ORDER BY day_index "
+    mycursor.execute(get_bookings)
+    lessons = mycursor.fetchall()
+    lessons = list(lessons)
+    book_into = conv_lessonid_obj(id)
+    booking_information = book_into.__dict__
+
+    time_delta = booking_information['_start_time']
+    seconds = time_delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds // 60) - (hours * 60)
+
+    if minutes < 10:
+        time = "{}:{}0".format(hours, minutes)
+    else:
+        time = "{}:{}".format(hours, minutes)
+
+    booking_information['_start_time'] = time
+
+    time_delta = booking_information['_end_time']
+    seconds = time_delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds // 60) - (hours * 60)
+
+    if minutes < 10:
+        time = "{}:{}0".format(hours, minutes)
+    else:
+        time = "{}:{}".format(hours, minutes)
+
+    booking_information['_end_time'] = time
+
+
+
+
+    print(booking_information)
+    # create variable and list used in loop
+    count = 0
+    lesson_list = []
+
+    for lesson in lessons:
+
+        lesson = list(lesson)
+        time_delta = lesson[3]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[3] = time
+
+        time_delta = lesson[4]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        lesson[4] = time
+        lesson_list.append(lesson)
+        count += 1
+    lessons = tuple(lesson_list)
+
+    if form.validate_on_submit():
+        book_into = conv_lessonid_obj(id)
+        today_date = date.today()
+
+        today_index = datetime.today().isoweekday()
+        today_index -= 1
+        diff_today_booking = int(book_into.day_index) - int(today_index)
+        date_to_book = today_date + timedelta(days=diff_today_booking)
+        number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
+
+        parameter = {'lesson_id': book_into.lesson_id, 'date': today_date}
+        mycursor.execute(number_in_lesson,parameter)
+        database_output = mycursor.fetchall()
+        current_total = len(database_output)
+        new_total = current_total + 1
+
+
+        if diff_today_booking < 0:
+            flash("This class has already happened this week. Please try booking for a different class.", "danger")
+            return redirect(url_for("location_queen_camel"))
+        if diff_today_booking == 0:
+            today = datetime.now()
+            time = book_into.start_time
+
+            seconds = time.seconds
+            hours = seconds // 3600
+            minutes = (seconds // 60) - (hours * 60)
+            seconds = seconds - ((minutes * 60) + (hours * 3600))
+            year = today.year
+            month = today.month
+            day = today.day
+
+            lesson_datetime = datetime(year, month, day, hours, minutes, seconds)
+            time_diff = lesson_datetime - today
+
+            if time_diff.days < 0:
+                flash("This class has already happened. Please try booking for a different class.", "danger")
+                return redirect(url_for("location_queen_camel"))
+
+        if new_total < book_into.maximum:
+            already_booked = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s AND user_id " \
+                             "= %(user_id)s "
+            parameter_2 = {'lesson_id': book_into.lesson_id, 'date': date_to_book, 'user_id': session['user']['_id']}
+            mycursor.execute(already_booked, parameter_2)
+            check = mycursor.fetchone()
+
+            if check is None:
+                book_into_lesson(book_into.lesson_id, session['user']['_id'], date_to_book)
+
+            else:
+                flash("You are already booked into this class.", "warning")
+                return redirect(url_for("location_queen_camel"))
+        else:
+            flash("Sorry, the class is full.", "warning")
+            return redirect(url_for("location_queen_camel"))
+
+    return render_template("book_overlay_queen_camel.html", lessons=lessons, form=form, info=booking_information)
 # ======================================================================================================================
 # Error Handlers
 # ======================================================================================================================
