@@ -24,44 +24,9 @@ from Classes import Account, Lesson
 # 1, '_last_graded': datetime.datetime(2022, 3, 22, 12, 56, 13), '_approved': None}
 
 
-# ! Change age to DoB
-#    --- Add an age calculator to account object to work out age automatically
-
-# IMPORTANT
-
-# create lesson page
-
-# commit to database
-
-# class browser
-
-# ----- display all classes from a certain place
-
-# -- therefore need a location select page after clicking book button that will be added to main page
-
-# clicking book, brings up screen in more detail with info and a conf button
-
-# ---- adds user_id lesson id date to bookings
-
-# ----- this should check to see all the classes where lesson id and date matches, count the number,
-# and compare to maximum number of people
-
-# page to seen own bookings
-
-# page identical to bookings for instructor, but when clicked on brings up every student booked. copy pasta
-
-# ---- account edit screen after new account and editing own personal account
-
-# ---- lesson amend, delete
-
-# New cluster of pages management umbrella  for instructors also contain a creation widget thingy for student/lesson
-#       account search system?
-#       ability to edit account and delete accounts as instuctor
-#       approve page as well.
-
-# time until grade
-
-# geolocation reccomendation feature
+# edit bookings and account (for instructor priority)
+# delete lessons
+# view bookings for each class
 
 
 # other things
@@ -798,8 +763,8 @@ def create_lesson():
     if form.validate_on_submit():
         if form.validate_times(form.lesson_start.data, form.lesson_end.data):
             search_lessons_statement = "SELECT day, start_time, lesson_id, location FROM lessons WHERE start_time = %(start_time)s AND day = %(day)s and location = %(location)s"
-            parameter = {'start_time': form.lesson_start.data, 'day': form.day.data, 'location': form.location.data}
-            mycursor.execute(search_lessons_statement, parameter)
+            parameters = {'start_time': form.lesson_start.data, 'day': form.day.data, 'location': form.location.data}
+            mycursor.execute(search_lessons_statement, parameters)
             lesson = mycursor.fetchone()
 
             if lesson is None:
@@ -860,6 +825,132 @@ def location_choice():
     return render_template("location_choice.html")
 
 
+@app.route('/view/bookings', methods=['GET', 'POST'])
+def view_bookings():
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER JOIN users ON bookings.user_id=users.user_id WHERE users.user_id = %(user_id)s ORDER BY bookings.date "
+    parameter = {'user_id': session['user']['_id']}
+    mycursor.execute(get_bookings, parameter)
+    bookings = mycursor.fetchall()
+    bookings = list(bookings)
+    print(bookings)
+
+    # create variable and list used in loop
+    count = 0
+    bookings_list = []
+
+    for booking in bookings:
+
+        booking = list(booking)
+        time_delta = booking[1]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        booking[1] = time
+
+        time_delta = booking[2]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        booking[2] = time
+        booking[3] = booking[3].capitalize()
+        bookings_list.append(booking)
+        count += 1
+
+    bookings = tuple(bookings_list)
+
+    if bookings == ():
+        no_bookings = True
+    else:
+        no_bookings = False
+
+    return render_template("view_current_bookings.html", bookings=bookings, no_bookings=no_bookings)
+
+
+@app.route('/bookings/cancel/<booking_id>', methods=['GET', 'POST'])
+def cancel_booking(booking_id):
+    form = ConfirmForm()
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    get_bookings = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER JOIN users ON bookings.user_id=users.user_id WHERE users.user_id = %(user_id)s ORDER BY bookings.date "
+    parameter = {'user_id': session['user']['_id']}
+    mycursor.execute(get_bookings, parameter)
+    bookings = mycursor.fetchall()
+    bookings = list(bookings)
+
+    # create variable and list used in loop
+    count = 0
+    bookings_list = []
+    for booking in bookings:
+
+        booking = list(booking)
+        time_delta = booking[1]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        booking[1] = time
+
+        time_delta = booking[2]
+        seconds = time_delta.seconds
+        hours = seconds // 3600
+        minutes = (seconds // 60) - (hours * 60)
+
+        if minutes < 10:
+            time = "{}:{}0".format(hours, minutes)
+        else:
+            time = "{}:{}".format(hours, minutes)
+        booking[2] = time
+        booking[3] = booking[3].capitalize()
+        bookings_list.append(booking)
+        count += 1
+
+    bookings = tuple(bookings_list)
+
+    get_booking = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER JOIN users ON bookings.user_id=users.user_id WHERE bookings.booking_id = %(id)s"
+    booking_parameter = {'id': int(booking_id)}
+    mycursor.execute(get_booking, booking_parameter)
+    booking = mycursor.fetchone()
+    booking_list = list(booking)
+    booking_list[3] = booking_list[3].capitalize()
+    booking = tuple(booking_list)
+    if form.validate_on_submit():
+        sql_delete_booking = "DELETE FROM bookings WHERE booking_id=%(id)s"
+        parameter = {'id': int(booking_id)}
+        mycursor.execute(sql_delete_booking,parameter)
+        mydb.commit()
+        flash("Your booking has been removed.", "info")
+        return redirect(url_for('view_bookings'))
+
+    return render_template("view_bookings_overlay.html", bookings=bookings, booking=booking, form=form)
 # ======================================================================================================================
 # Wincanton
 # ======================================================================================================================
@@ -1043,6 +1134,8 @@ def book_lesson_wincanton(id):
 
             if check is None:
                 book_into_lesson(book_into.lesson_id, session['user']['_id'], date_to_book)
+                flash("Your booking has been confirmed.", "info")
+                return redirect(url_for('view_bookings'))
 
             else:
                 flash("You are already booked into this class.", "warning")
@@ -1152,10 +1245,6 @@ def book_lesson_merriot(id):
 
     booking_information['_end_time'] = time
 
-
-
-
-    print(booking_information)
     # create variable and list used in loop
     count = 0
     lesson_list = []
@@ -1236,6 +1325,8 @@ def book_lesson_merriot(id):
 
             if check is None:
                 book_into_lesson(book_into.lesson_id, session['user']['_id'], date_to_book)
+                flash("Your booking has been confirmed.", "info")
+                return redirect(url_for('view_bookings'))
 
             else:
                 flash("You are already booked into this class.", "warning")
@@ -1431,6 +1522,8 @@ def book_lesson_queen_camel(id):
 
             if check is None:
                 book_into_lesson(book_into.lesson_id, session['user']['_id'], date_to_book)
+                flash("Your booking has been confirmed.", "info")
+                return redirect(url_for('view_bookings'))
 
             else:
                 flash("You are already booked into this class.", "warning")

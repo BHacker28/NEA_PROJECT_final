@@ -1,0 +1,43 @@
+{% extends 'view_current_bookings.html' %}
+    {% block modal %}
+
+<!-- Modal -->
+<div class="modal fade" id="cancel" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Cancel Booking</h5>
+        <a href="{{ url_for('view_bookings') }}" type="button" class="btn-close" aria-label="Close"></a>
+      </div>
+      <div class="modal-body">
+        <h5><u>{{ booking[3] }}</u></h5>
+          <h6>{{ booking[0] }}</h6>
+             <p>
+              <b> {{ booking[4] }}</b>
+          </br><b>Time</b> </br> {{ booking[1] }} - {{ booking[2] }}
+        </br></br> </p>
+      </div>
+      <div class="modal-footer">
+        <a href="{{ url_for('view_bookings') }}" type="button" class="btn btn-secondary">Cancel</a>
+         <form method="POST">
+     {{ form.hidden_tag() }}
+      <div class="col-12">
+        {{ form.submit(
+        class="btn btn-primary") }}
+      </div>
+    </form>
+      </div>
+    </div>
+  </div>
+</div>
+    {% endblock %}
+
+{% block script %}
+    <script>
+
+    $(document).ready(function(){
+        console.log("Pop-up Window Loaded")
+        $("#cancel").modal("show")
+    })
+    </script>
+{% endblock %}
