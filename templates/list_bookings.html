@@ -1,0 +1,51 @@
+{% extends 'base.html'  %}
+{% block content %}
+
+      <div class="row-sm g-6 border border-2 p-3 bg-white" style="background-image; background-size: cover; padding-top: 200px; text-align: center;">
+
+      <div class="container">
+
+
+      <h2 style="font-size:90px; margin:50px;">{{ lesson['_day'] }}</h2>
+
+
+        <h3>{{ lesson['_start_time'] }} - {{ lesson['_end_time'] }}</h3>
+            <br/>
+
+     <a href="{{url_for('location_choice')}}"> <button style="font-size: 70px; padding-bottom: 10px;padding-left: 50px;padding-right: 50px; border-radius: 80px" type="button" class="btn btn-dark ">  Return to Bookings  </button></a>
+        <br/><br/>
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+    <tr>
+      <th scope="col">Email</th>
+      <th scope="col">First name</th>
+      <th scope="col">Last name</th>
+      <th scope="col">Grade</th>
+    </tr>
+  </thead>
+        {% for booking in all_bookings %}
+        <tr>
+            <td>{{ booking[0] }}</td>
+            <td>{{ booking[1] }}</td>
+            <td>{{ booking[2] }}</td>
+            <td>{{ booking[3] }}</td>
+        </tr>
+        {% endfor %}
+
+</table>
+
+
+
+    </div>
+
+
+     </div>
+      </br>
+          </br>
+          </br>
+
+      <br/><br/><br/><br/>
+        </div>
+
+
+{% endblock %}

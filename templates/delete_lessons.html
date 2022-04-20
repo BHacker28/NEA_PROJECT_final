@@ -1,0 +1,40 @@
+{% extends 'base.html'  %}
+{% block content %}
+
+
+      <div class="row-sm g-6 border border-2 p-3 bg-white" style="background-size: cover; padding-top: 200px; text-align: center;">
+        <div class="container" style="background-color: white; border-radius: 30px; text-align: center">
+       <br/>
+            <h1><u><b>{{ lesson['_location'] }}</b></u></h1>
+            <h2><b>{{ lesson['_day'] }}</b></h2>
+        <br/><br/>
+
+    <div class="card shadow p-3 mb-5 " style="border-radius: 30px">
+      <div class="card-body">
+          <h5 class="card-title"><u>{{ lesson['_level'] }}</u></h5>
+          <p class="card-text"><b>Time</b> </br> {{ lesson['_start_time'] }} - {{ lesson['_end_time'] }}
+        </br></br>
+          <b>Maximum Capacity</b>
+              </br>
+          {{ lesson['_maximum'] }}
+          </br>
+
+          </p></br>
+          <a href="{{ url_for('view_bookings') }}" type="button" class="btn btn-secondary">Cancel</a>
+          </br></br>
+            <form method="POST">
+     {{ form.hidden_tag() }}
+      <div class="col-12">
+        {{ form.submit(
+        class="btn btn-primary") }}
+      </div>
+    </form>
+      </div>
+    </div>
+
+            </div>
+      <br/><br/><br/>
+
+      </div>
+
+{% endblock %}

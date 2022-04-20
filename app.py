@@ -23,10 +23,8 @@ from Classes import Account, Lesson
 # datetime.datetime(2022, 3, 22, 12, 56, 13), '_first_name': 'Ben', '_last_name': 'Hacker', '_age': 18, '_belt_id':
 # 1, '_last_graded': datetime.datetime(2022, 3, 22, 12, 56, 13), '_approved': None}
 
+# manage users and delete them
 
-# edit bookings and account (for instructor priority)
-# delete lessons
-# view bookings for each class
 
 
 # other things
@@ -211,6 +209,10 @@ app.config['SECRET_KEY'] = db['app_secret_key']
 
 class ConfirmForm(FlaskForm):
     submit = SubmitField("Confirm")
+
+class SearchForm(FlaskForm):
+    search = StringField("Search", validators=[DataRequired()])
+    submit = SubmitField("Search")
 
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
@@ -565,6 +567,32 @@ def dashboard():
 # ======================================================================================================================
 # Accounts
 # ======================================================================================================================
+@app.route('/accounts/manage', methods=['GET', 'POST'])
+def manage_accounts():
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    filtered_users = None
+    form = SearchForm()
+    if form.validate_on_submit():
+        print("test")
+        sql_search = "SELECT users.first_name, users.last_name, users.last_name, accounts.email, accounts.date_added, accounts.approved FROM users INNER JOIN accounts ON users.user_id = accounts.user_id WHERE users.last_name LIKE %(search)s"
+        parameter = {"search": form.search.data + "%"}
+        mycursor.execute(sql_search, parameter)
+        filtered_users = mycursor.fetchall()
+        print(filtered_users)
+
+    return render_template("manage_accounts.html", users=filtered_users, form=form)
+
 
 @app.route('/account/create', methods=['GET', 'POST'])
 def create_student():
@@ -742,6 +770,29 @@ def account_details():
 # ======================================================================================================================
 # Lessons
 # ======================================================================================================================
+@app.route('/bookings/list/<date>/<id>', methods=['GET', 'POST'])
+def list_booked(id,date):
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    sql_get_bookings = "SELECT accounts.email, users.first_name, users.last_name, belts.belt_name FROM accounts INNER JOIN users ON accounts.user_id = users.user_id INNER JOIN bookings ON users.user_id = bookings.user_id INNER JOIN belts ON belts.belt_id = users.belt_id WHERE bookings.lesson_id = %(lesson_id)s AND bookings.date = %(date)s"
+    parameters = {'lesson_id': id, 'date': date}
+    mycursor.execute(sql_get_bookings,parameters)
+    print(id)
+    all_bookings = mycursor.fetchall()
+    lesson_info = conv_lessonid_obj(id)
+    lesson_info = lesson_info.__dict__
+
+    return render_template("list_bookings.html", all_bookings=all_bookings, lesson=lesson_info)
 
 
 @app.route('/create/lesson', methods=['GET', 'POST'])
@@ -809,6 +860,40 @@ def create_lesson():
     return render_template("create_lesson.html",
                            form=form)
 
+
+@app.route('/delete/lesson/<id>', methods=['GET', 'POST'])
+def delete_lesson(id):
+    form = ConfirmForm()
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    lesson = conv_lessonid_obj(id)
+    lesson_info = lesson.__dict__
+    lesson_info['_location'] = lesson_info['_location'].capitalize()
+    lesson_info['_level'] = lesson_info['_level'].capitalize()
+
+    if form.validate_on_submit():
+        sql_delete_bookings = "DELETE FROM bookings WHERE lesson_id=%(id)s"
+        parameter = {'id': int(id)}
+        mycursor.execute(sql_delete_bookings, parameter)
+        mydb.commit()
+        sql_delete_lesson = "DELETE FROM lessons WHERE lesson_id=%(id)s"
+        parameter = {'id': int(id)}
+        mycursor.execute(sql_delete_lesson, parameter)
+        mydb.commit()
+        flash("Class has been deleted.", "danger")
+        return redirect(url_for('location_choice'))
+
+    return render_template("delete_lessons.html", form=form, lesson=lesson_info)
 
 @app.route('/book/location', methods=['GET', 'POST'])
 def location_choice():
@@ -1086,17 +1171,19 @@ def book_lesson_wincanton(id):
         count += 1
     lessons = tuple(lesson_list)
 
-    if form.validate_on_submit():
-        book_into = conv_lessonid_obj(id)
-        today_date = date.today()
+    book_into = conv_lessonid_obj(id)
+    today_date = date.today()
 
-        today_index = datetime.today().isoweekday()
-        today_index -= 1
-        diff_today_booking = int(book_into.day_index) - int(today_index)
-        date_to_book = today_date + timedelta(days=diff_today_booking)
+    today_index = datetime.today().isoweekday()
+    today_index -= 1
+    diff_today_booking = int(book_into.day_index) - int(today_index)
+    date_to_book = today_date + timedelta(days=diff_today_booking)
+
+    if form.validate_on_submit():
+
         number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
 
-        parameter = {'lesson_id': book_into.lesson_id, 'date': today_date}
+        parameter = {'lesson_id': book_into.lesson_id, 'date': date_to_book}
         mycursor.execute(number_in_lesson,parameter)
         database_output = mycursor.fetchall()
         current_total = len(database_output)
@@ -1144,7 +1231,7 @@ def book_lesson_wincanton(id):
             flash("Sorry, the class is full.", "warning")
             return redirect(url_for("location_wincanton"))
 
-    return render_template("book_overlay_wincanton.html", lessons=lessons, form=form, info=booking_information)
+    return render_template("book_overlay_wincanton.html", lessons=lessons, form=form, info=booking_information, date_to_book=date_to_book)
 
 # ======================================================================================================================
 # Merriot
@@ -1438,10 +1525,6 @@ def book_lesson_queen_camel(id):
 
     booking_information['_end_time'] = time
 
-
-
-
-    print(booking_information)
     # create variable and list used in loop
     count = 0
     lesson_list = []

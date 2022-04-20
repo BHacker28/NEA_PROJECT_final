@@ -1,0 +1,58 @@
+{% extends 'base.html'  %}
+{% block content %}
+
+<div class="container shadow p-3 mb-5 rounded bg-white">
+    <form class="d-flex" method = "POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.search(
+        class="form-control me-2", placeholder="Search by Last Name") }}
+        {{ form.submit(
+            class="btn btn-secondary") }}
+      </form>
+</div>
+
+
+    {% if users %}
+
+<div class ="container">
+    <table class="table table-striped table-hover shadow p-3 mb-5 rounded bg-white">
+        <thead class="table-dark">
+    <tr>
+      <th scope="col">Email</th>
+      <th scope="col">First name</th>
+      <th scope="col">Last name</th>
+      <th scope="col">Date joined</th>
+        <th scope="col">Approved</th>
+    </tr>
+  </thead>
+        {% for user in users %}
+        <tr>
+            <td>{{ user[3] }}</td>
+            <td>{{ user[0] }}</td>
+            <td>{{ user[1] }}</td>
+            <td>{{ user[4] }}</td>
+            <td>{% if user[5] == True %}
+                <p>Approved</p>
+                {% else %}
+                <p>Not Approved</p>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</div>>
+
+
+
+     </div>
+    {% endif %}
+      </br>
+          </br>
+          </br>
+
+      <br/><br/><br/><br/>
+
+
+{% endblock %}
