@@ -21,6 +21,7 @@
       <th scope="col">First name</th>
       <th scope="col">Last name</th>
       <th scope="col">Grade</th>
+        <th scope="col"></th>
     </tr>
   </thead>
         {% for booking in all_bookings %}
@@ -29,6 +30,7 @@
             <td>{{ booking[1] }}</td>
             <td>{{ booking[2] }}</td>
             <td>{{ booking[3] }}</td>
+        <td><a href="{{ url_for('list_booked_delete', student_id=booking[4], id=id,date=date)}}" class="btn btn-outline-danger btn-sm">Remove</a></td>
         </tr>
         {% endfor %}
 

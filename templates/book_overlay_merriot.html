@@ -18,6 +18,11 @@
   <p>{{ info['_info'] }}</p>
       </div>
       <div class="modal-footer">
+          {% if session['user'] != none %}
+              {% if session['user']['_authority'] == 'instructor' %}
+                  <a href="{{url_for('list_booked', id=info['_lesson_id'], date=date_to_book)}}"> <button style="font-size: 18px; padding-top: 15px; padding-bottom: 15px;padding-left: 40px;padding-right: 40px; border-radius: 40px; width: 200px" type="button" class="btn btn-warning shadow-sm p-3 mb-5 ">View Booked Students</button></a>
+              {% endif %}
+            {% endif %}
         <a href="{{ url_for('location_merriot') }}" type="button" class="btn btn-secondary">Cancel Booking</a>
          <form method="POST">
      {{ form.hidden_tag() }}

@@ -2,7 +2,9 @@
 {% block content %}
  <div class="container">
 
-    <h1>Create a New User</h1>
+
+
+    <h1>Edit Account</h1>
     <br/>
 
     <form class="row g-3 border border-3 p-3 bg-white" method="POST">
@@ -13,19 +15,11 @@
         class="form-label") }}
         {{ form.email(
         class="form-control", placeholder="Example@email.com") }}
+
       </div>
-      <div class="col-md-6">
-        {{ form.password.label(
-        class="form-label") }}
-        {{ form.password(
-        class="form-control") }}
-      </div>
-      <div class="col-md-6">
-        {{ form.password_match.label(
-        class="form-label") }}
-        {{ form.password_match(
-        class="form-control") }}
-      </div>
+
+
+
         <div class="col-md-6">
         {{ form.first_name.label(
         class="form-label") }}
@@ -38,25 +32,13 @@
         {{ form.last_name(
         class="form-control") }}
       </div>
+
       <div class="col-2">
         {{ form.age.label(
         class="form-label") }}
         {{ form.age(
         class="form-control") }}
 
-      </div>
-
-      <div class="col-md-4">
-        {{ form.belt_id.label(
-        class="form-label") }}
-        {{ form.belt_id(
-        class="form-select") }}
-      </div>
-      <div class="col-md-2">
-         {{ form.authority.label(
-        class="form-label") }}
-        {{ form.authority(
-        class="form-select") }}
       </div>
 
       <div class="col-12">
@@ -66,5 +48,5 @@
     </form>
 
     <br/><br/><br/>
- </div>
+    </div>
 {% endblock %}

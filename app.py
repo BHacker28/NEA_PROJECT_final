@@ -210,20 +210,15 @@ app.config['SECRET_KEY'] = db['app_secret_key']
 class ConfirmForm(FlaskForm):
     submit = SubmitField("Confirm")
 
+
 class SearchForm(FlaskForm):
-    search = StringField("Search", validators=[DataRequired()])
+    search = StringField("Search")
     submit = SubmitField("Search")
+
 
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])
-    submit = SubmitField("Submit")
-
-
-# Create Password Form
-class PasswordForm(FlaskForm):
-    email = StringField("Email:", validators=[DataRequired()])
-    password_hash = PasswordField("Password:", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -251,6 +246,14 @@ class NewStudentForm(FlaskForm):
 
 
 class EditStudentForm(FlaskForm):
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
+    age = IntegerField("Age", validators=[DataRequired()])
+    submit = SubmitField("Confirm")
+
+
+class EditStudentAsInstructorForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
@@ -308,11 +311,15 @@ class NewLessonForm(FlaskForm):
             return True
 
 
+# Function to calculate the difference between two dates
 def calc_date_between(start, end):
 
+    # checks to see if end argument is now, this was added to easily calculate ages from dates of birth.
     if end == "now":
+        # Gets current date
         end = datetime.utcnow()
 
+    # Check to see whether the date is in datetime form or date form, for both start and end dates.
     try:
         start = start.date()
     except:
@@ -322,13 +329,19 @@ def calc_date_between(start, end):
         end = end.date()
     except:
         print("End date is already in date form")
+
+    # Calculates the difference between the two dates
     diff = relativedelta(end, start)
+
+    # Assigns each part of the data to a variable corresponding to the data held.
     years = diff.years
     months = diff.months
     days = diff.days
 
+    # Creates a data object from the information gathered above.
     Date_in_form = date(years, months, days)
 
+    # Returns a tuple, containing the date object, as well as each component individually.
     return  Date_in_form, years, months, days
 
 
@@ -342,7 +355,6 @@ def conv_accountid_obj(id):
     user_data = mycursor.fetchall()
 
     current = Account(id)
-
     current.user_id = id
     current.email = account_data[0][2]
     current.password_hash = account_data[0][3]
@@ -354,6 +366,7 @@ def conv_accountid_obj(id):
     current.last_name = user_data[0][3]
     current.last_graded = user_data[0][5]
     current.age = user_data[0][4]
+    current.approved = account_data[0][7]
     return current
 
 
@@ -409,16 +422,20 @@ def update_account_to_db(account):
         users_age = account.age
         foreign_belt_id = account.belt_id
         users_last_graded = account.last_graded
+        print(accounts_id)
+        print(accounts_email)
+        print(users_age)
 
         mycursor.execute("UPDATE Accounts SET email=%s, password_hash=%s, last_logged_in=%s, date_added=%s, "
-                         "authority=%s, user_id=%s WHERE id=%s", (accounts_email, accounts_password_hash,
+                         "authority=%s, user_id=%s, approved=%s WHERE id=%s", (accounts_email, accounts_password_hash,
                                                                   accounts_last_logged_in, accounts_date_added,
                                                                   accounts_authority,
-                                                                  foreign_user_id, accounts_id))
+                                                                  foreign_user_id,account.approved, accounts_id))
         mycursor.execute("UPDATE Users SET first_name=%s, last_name=%s, age=%s, last_graded=%s, belt_id=%s WHERE "
                          "user_id=%s", (users_first_name, users_last_name, users_age, users_last_graded,
                                         foreign_belt_id, foreign_user_id))
         mydb.commit()
+
     except:
         print("Error Commiting changes to the database.")
 
@@ -441,20 +458,21 @@ def insert_account_into_db(account):
 
         sql_insert_into_accounts = "INSERT INTO accounts (id, user_id ,email, password_hash, authority, " \
                                    "last_logged_in, date_added, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
-        accountValues = (accounts_id, foreign_user_id, accounts_email, accounts_password_hash, accounts_authority,
+        accountvalues = (accounts_id, foreign_user_id, accounts_email, accounts_password_hash, accounts_authority,
                          accounts_last_logged_in, accounts_date_added, account_approved)
 
         sql_insert_into_users = "INSERT INTO users (user_id, first_name, last_name, age, belt_id,last_graded) VALUES " \
                                 "(%s, %s, %s, %s, %s, %s) "
-        userValues = (foreign_user_id, users_first_name, users_last_name, users_age, foreign_belt_id, users_last_graded)
+        uservalues = (foreign_user_id, users_first_name, users_last_name, users_age, foreign_belt_id, users_last_graded)
 
-        mycursor.execute(sql_insert_into_users, userValues)
-        mycursor.execute(sql_insert_into_accounts, accountValues)
+        mycursor.execute(sql_insert_into_users, uservalues)
+        mycursor.execute(sql_insert_into_accounts, accountvalues)
 
         mydb.commit()
 
     except mysql.connector.Error as error:
         print(error.msg)
+
 
 def insert_lesson_into_db(lesson):
     try:
@@ -473,14 +491,10 @@ def insert_lesson_into_db(lesson):
         print(error.msg)
 
 
-
 def book_into_lesson(lesson_id,user_id, date_to_book):
     try:
-        print("test1")
         mycursor.execute("SELECT booking_id FROM bookings ORDER BY booking_id DESC")
-        print("2")
         next_id = mycursor.fetchone()
-        print("3")
 
         try:
             new_id = int(next_id[0]) + 1
@@ -488,18 +502,11 @@ def book_into_lesson(lesson_id,user_id, date_to_book):
             new_id = 1
 
         sql_insert_into_bookings = "INSERT INTO bookings (booking_id, user_id ,lesson_id, date) VALUES (%s, %s, %s, %s)"
-        print("4")
         booking_values = (new_id, user_id, int(lesson_id), date_to_book)
-        print("5")
-
         mycursor.execute(sql_insert_into_bookings, booking_values)
-        print("6")
-
         mydb.commit()
-        print("7")
 
     except mysql.connector.Error as error:
-        print("failed")
         print(error.msg)
 
 
@@ -528,11 +535,14 @@ def login():
 
             # Check Hashed Password with inputted one
             if check_password_hash(account_data_all.password_hash, form.password.data):
-                flash("Login Successful!", "success")
-                session['user'] = account_data_all.__dict__
-                session['manage_user'] = None
-                session['user']['_date_added'] = session['user']['_date_added']
-                return redirect(url_for('dashboard'))
+                if account_data_all.approved == 1:
+                    flash("Login Successful!", "success")
+                    session['user'] = account_data_all.__dict__
+                    session['manage_user'] = None
+                    session['user']['_date_added'] = session['user']['_date_added']
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash("Your account hasn't been approved yet. Please wait for your instructor to do so.", category="info")
             else:
                 flash("Wrong Password or Username. Try Again...", category="danger_below")
         except:
@@ -583,15 +593,120 @@ def manage_accounts():
 
     filtered_users = None
     form = SearchForm()
+    sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id"
+    mycursor.execute(sql_search)
+    filtered_users = mycursor.fetchall()
+
     if form.validate_on_submit():
-        print("test")
-        sql_search = "SELECT users.first_name, users.last_name, users.last_name, accounts.email, accounts.date_added, accounts.approved FROM users INNER JOIN accounts ON users.user_id = accounts.user_id WHERE users.last_name LIKE %(search)s"
-        parameter = {"search": form.search.data + "%"}
-        mycursor.execute(sql_search, parameter)
-        filtered_users = mycursor.fetchall()
-        print(filtered_users)
+        if form.search.data != '':
+            sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id WHERE users.last_name LIKE %(search)s"
+            parameter = {"search": form.search.data + "%"}
+            mycursor.execute(sql_search, parameter)
+            filtered_users = mycursor.fetchall()
+            print(filtered_users)
+        else:
+            sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id"
+            mycursor.execute(sql_search)
+            filtered_users = mycursor.fetchall()
 
     return render_template("manage_accounts.html", users=filtered_users, form=form)
+
+
+@app.route('/accounts/manage/edit/<id>', methods=['GET', 'POST'])
+def edit_manage_accounts(id):
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+
+    form = EditStudentAsInstructorForm()
+    edit_account = conv_accountid_obj(id)
+
+
+    if form.validate_on_submit():
+
+        edit_account.email = form.email.data
+        edit_account.first_name = form.first_name.data
+        edit_account.last_name = form.last_name.data
+        edit_account.age = form.age.data
+        edit_account.authority = form.authority.data
+        edit_account.belt_id = form.belt_id.data
+        update_account_to_db(edit_account)
+        flash("User Updated Successfully!", 'success')
+        return redirect(url_for('manage_accounts'))
+
+    else:
+        form.first_name.data = edit_account.first_name
+        form.last_name.data = edit_account.last_name
+        form.email.data = edit_account.email
+        form.age.data = edit_account.age
+        form.authority.data = edit_account.authority
+        form.belt_id.data = edit_account.belt_id
+
+
+        return render_template("edit_account.html", form=form)
+
+
+@app.route('/accounts/manage/delete/<id>', methods=['GET', 'POST'])
+def delete_manage_accounts(id):
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    sql_delete_account = "DELETE FROM bookings WHERE user_id=%(id)s"
+    parameter = {'id': int(id)}
+    mycursor.execute(sql_delete_account, parameter)
+    mydb.commit()
+    sql_delete_account = "DELETE FROM accounts WHERE user_id=%(id)s"
+    parameter = {'id': int(id)}
+    mycursor.execute(sql_delete_account, parameter)
+    mydb.commit()
+    sql_delete_user = "DELETE FROM users WHERE user_id=%(id)s"
+    parameter = {'id': int(id)}
+    mycursor.execute(sql_delete_user, parameter)
+    mydb.commit()
+    flash("Student has been deleted.", "danger")
+    return redirect(url_for('manage_accounts'))
+
+
+@app.route('/accounts/manage/approve/<id>', methods=['GET', 'POST'])
+def approve_manage_accounts(id):
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    approve_account = conv_accountid_obj(id)
+    approve_account.approved = True
+    print("test")
+    update_account_to_db(approve_account)
+    flash("Student has been approved.", "info")
+    return redirect(url_for('manage_accounts'))
 
 
 @app.route('/account/create', methods=['GET', 'POST'])
@@ -608,64 +723,59 @@ def create_student():
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    if session['manage_user'] is None:
+    form = NewStudentForm()
+    account = None
 
-        form = NewStudentForm()
-        account = None
+    if form.validate_on_submit():
+        search_account_statement = "SELECT * FROM accounts WHERE email = %(email)s"
+        parameter = {'email': form.email.data}
+        mycursor.execute(search_account_statement, parameter)
+        account = mycursor.fetchone()
 
-        if form.validate_on_submit():
-            search_account_statement = "SELECT * FROM accounts WHERE email = %(email)s"
-            parameter = {'email': form.email.data}
-            mycursor.execute(search_account_statement, parameter)
-            account = mycursor.fetchone()
+        if account is None:
+            mycursor.execute("SELECT id FROM accounts ORDER BY id DESC")
 
-            if account is None:
-                mycursor.execute("SELECT id FROM accounts ORDER BY id DESC")
+            next_id = mycursor.fetchone()
+            try:
+                new_id = int(next_id[0]) + 1
 
-                next_id = mycursor.fetchone()
-                try:
-                    new_id = int(next_id[0]) + 1
+            except:
+                new_id = 1
+            new_account = Account(new_id)
 
-                except:
-                    new_id = 1
-                new_account = Account(new_id)
+            # Hash password
+            hashed_pw = generate_password_hash(form.password.data, "sha256")
+            # find belt in database
+            current_date = datetime.utcnow()
+            current_date = current_date.date()
+            new_account.email = form.email.data
+            new_account.first_name = form.first_name.data
+            new_account.last_name = form.last_name.data
+            new_account.belt_id = form.belt_id.data
+            new_account.authority = form.authority.data
+            new_account.age = form.age.data
+            new_account.date_added = current_date
+            new_account.password_hash = hashed_pw
+            new_account.last_logged_in = current_date
+            new_account.last_graded = current_date
+            new_account.approved = True
+            insert_account_into_db(new_account)
 
-                # Hash password
-                hashed_pw = generate_password_hash(form.password.data, "sha256")
-                # find belt in database
-                current_date = datetime.utcnow()
-                current_date = current_date.date()
-                new_account.email = form.email.data
-                new_account.first_name = form.first_name.data
-                new_account.last_name = form.last_name.data
-                new_account.belt_id = form.belt_id.data
-                new_account.authority = form.authority.data
-                new_account.age = form.age.data
-                new_account.date_added = current_date
-                new_account.password_hash = hashed_pw
-                new_account.last_logged_in = current_date
-                new_account.last_graded = current_date
-                new_account.approved = True
-                insert_account_into_db(new_account)
-                session['manage_user'] = new_account.__dict__
-                belt_name = conv_beltid_name(session['manage_user']['_belt_id'])
-                session['belt_name'] = belt_name
-                flash("User Added Successfully!", 'success')
-                return redirect(url_for('create_student'))
+            flash("User Added Successfully!", 'success')
+            return redirect(url_for('manage_accounts'))
 
-            form.first_name.data = ''
-            form.last_name.data = ''
-            form.email.data = ''
-            form.belt_id.data = ''
-            form.authority.data = ''
-            form.password.data = ''
-            form.password_match.data = ''
-            form.age.data = ''
+        form.first_name.data = ''
+        form.last_name.data = ''
+        form.email.data = ''
+        form.belt_id.data = ''
+        form.authority.data = ''
+        form.password.data = ''
+        form.password_match.data = ''
+        form.age.data = ''
 
-        return render_template("create_student.html",
-                               form=form)
-    else:
-        return render_template("create_student.html")
+    return render_template("create_student.html",
+                           form=form)
+
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -703,7 +813,7 @@ def signup():
             new_account.password_hash = hashed_pw
             new_account.last_logged_in = datetime.utcnow()
             new_account.last_graded = datetime.utcnow()
-            new_account.approved = True
+            new_account.approved = False
             insert_account_into_db(new_account)
 
             flash("Account request Successful! Please wait for the account to be approved by your instructor.",
@@ -721,51 +831,39 @@ def signup():
                            form=form)
 
 
-@app.route('/account/delete/')
-def delete_account(id):
-    account_to_delete = Accounts.query.get_or_404(id)
+@app.route('/account/edit', methods=['GET', 'POST'])
+def edit_student():
+
     try:
-        db.session.delete(account_to_delete)
-        db.session.commit()
-        flash("User Deleted Successfully!")
-        return render_template("dashboard.html")
+        account = conv_accountid_obj(session['user']['_id'])
 
     except:
-        flash("Whoops! There was a problem deleting user. Try again...")
-        return redirect(url_for('account_details', id=id))
 
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
 
-@app.route('/account/edit/', methods=['GET', 'POST'])
-def edit_account():
-    account = Accounts.query.get_or_404(id)
     form = EditStudentForm()
+    edit_account = conv_accountid_obj(session['user']['_id'])
+
+
     if form.validate_on_submit():
-        print("HERE")
-        account.user.first_name = form.first_name.data
-        account.user.last_name = form.last_name.data
-        account.email = form.email.data
-        account.user.belt = Belts.query.filter_by(belt_id=form.belt_id.data).first()
-        account.authority = form.authority.data
-        account.user.age = int(form.age.data)
-        # Update Database
-        db.session.add(account)
-        db.session.commit()
-        flash("Post Has Been Updated!")
-        return redirect(url_for('account_details', id=account.id))
 
-    form.first_name.data = account.user.first_name
-    form.last_name.data = account.user.last_name
-    form.email.data = account.email
-    form.belt_id.data = str(account.user.belt.belt_id)
-    form.authority.data = account.authority
-    form.age.data = str(account.user.age)
-    return render_template('edit_account.html', form=form)
+        edit_account.email = form.email.data
+        edit_account.first_name = form.first_name.data
+        edit_account.last_name = form.last_name.data
+        edit_account.age = form.age.data
+        update_account_to_db(edit_account)
+        flash("User Updated Successfully!", 'success')
 
+        return redirect(url_for('dashboard'))
 
-@app.route('/account/check', methods=['GET', 'POST'])
-def account_details():
-    return render_template("account.html")
+    else:
+        form.first_name.data = edit_account.first_name
+        form.last_name.data = edit_account.last_name
+        form.email.data = edit_account.email
+        form.age.data = edit_account.age
 
+        return render_template("edit_student.html", form=form)
 
 # ======================================================================================================================
 # Lessons
@@ -784,15 +882,41 @@ def list_booked(id,date):
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    sql_get_bookings = "SELECT accounts.email, users.first_name, users.last_name, belts.belt_name FROM accounts INNER JOIN users ON accounts.user_id = users.user_id INNER JOIN bookings ON users.user_id = bookings.user_id INNER JOIN belts ON belts.belt_id = users.belt_id WHERE bookings.lesson_id = %(lesson_id)s AND bookings.date = %(date)s"
+    sql_get_bookings = "SELECT accounts.email, users.first_name, users.last_name, belts.belt_name, users.user_id FROM accounts INNER JOIN users ON accounts.user_id = users.user_id INNER JOIN bookings ON users.user_id = bookings.user_id INNER JOIN belts ON belts.belt_id = users.belt_id WHERE bookings.lesson_id = %(lesson_id)s AND bookings.date = %(date)s"
     parameters = {'lesson_id': id, 'date': date}
     mycursor.execute(sql_get_bookings,parameters)
-    print(id)
     all_bookings = mycursor.fetchall()
     lesson_info = conv_lessonid_obj(id)
     lesson_info = lesson_info.__dict__
 
-    return render_template("list_bookings.html", all_bookings=all_bookings, lesson=lesson_info)
+    return render_template("list_bookings.html", all_bookings=all_bookings, lesson=lesson_info, date=date,id=id)
+
+
+@app.route('/bookings/list/<date>/<id>/remove/<student_id>', methods=['GET', 'POST'])
+def list_booked_delete(id, student_id, date):
+
+    try:
+        account = conv_accountid_obj(session['user']['_id'])
+        auth = account.authority
+        if auth != "instructor":
+            flash("Sorry, you must be logged in as an instructor to use this feature.", category="danger_below")
+            return redirect(url_for('login'))
+
+    except:
+
+        flash("Sorry, you must be logged in to use this feature.", category="danger_below")
+        return redirect(url_for('login'))
+
+    print(id)
+    print(student_id)
+    print(date)
+
+    sql_delete_account = "DELETE FROM bookings WHERE user_id=%(student_id)s AND lesson_id=%(id)s AND date=%(date)s"
+    parameter = {'id': id, 'student_id': student_id, 'date': date}
+    mycursor.execute(sql_delete_account, parameter)
+    mydb.commit()
+    flash("Student's booking has been removed.", "danger")
+    return redirect(url_for('list_booked', date=date, id=id))
 
 
 @app.route('/create/lesson', methods=['GET', 'POST'])
@@ -842,7 +966,7 @@ def create_lesson():
                 insert_lesson_into_db(new_lesson)
 
                 flash("Lesson created Successfully!", 'success')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('location_choice'))
             else:
                 flash("WARNING. There is already a lesson booked at this location for this slot.", "warning")
 
@@ -1624,14 +1748,6 @@ def book_lesson_queen_camel(id):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html")
-
-# test = conv_accountid_obj(1).__dict__
-# test2 = conv_accountid_obj(2).__dict__
-# dict  = [test,test2]
-# test3 = dict
-# for x in dict:
-#    print(x)
-#    print(x['_email'])
 
 # Run the App
 if __name__ == '__main__':

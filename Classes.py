@@ -1,4 +1,4 @@
-# Create account object
+# Account Object
 class Account:
 
     def __init__(self, id):
@@ -124,7 +124,7 @@ class Account:
         self._approved = approved
 
 
-# Create a lesson object
+# Lesson Object
 
 class Lesson:
 
@@ -214,3 +214,4 @@ class Lesson:
     @level.setter
     def level(self, level):
         self._level = level
+

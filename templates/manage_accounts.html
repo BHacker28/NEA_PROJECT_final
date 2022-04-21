@@ -24,28 +24,29 @@
       <th scope="col">Last name</th>
       <th scope="col">Date joined</th>
         <th scope="col">Approved</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
     </tr>
   </thead>
         {% for user in users %}
         <tr>
-            <td>{{ user[3] }}</td>
+            <td>{{ user[2] }}</td>
             <td>{{ user[0] }}</td>
             <td>{{ user[1] }}</td>
-            <td>{{ user[4] }}</td>
-            <td>{% if user[5] == True %}
+            <td>{{ user[3] }}</td>
+            <td>{% if user[4] == 1 %}
                 <p>Approved</p>
                 {% else %}
-                <p>Not Approved</p>
+                <p><a href="{{ url_for('approve_manage_accounts', id=user[5])}}" class="btn btn-primary btn-sm">Approve</a></p>
                 {% endif %}
             </td>
+            <td><a href="{{ url_for('edit_manage_accounts', id=user[5])}}" class="btn btn-outline-primary btn-sm">Edit</a></td>
+        <td><a href="{{ url_for('delete_manage_accounts', id=user[5])}}" class="btn btn-danger btn-sm">Delete</a></td>
         </tr>
         {% endfor %}
 
     </table>
-</div>>
-
-
-
+</div>
      </div>
     {% endif %}
       </br>

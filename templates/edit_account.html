@@ -1,49 +1,21 @@
-{% extends 'base.html'  %}
+           {% extends 'base.html'  %}
 {% block content %}
-     <div class="container">
+ <div class="container">
 
-    {% for message in get_flashed_messages(category_filter=["success"]) %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-     {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
-
-    {% for message in get_flashed_messages(category_filter=['warning']) %}
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-     {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
-
-        {% for message in get_flashed_messages(category_filter=['danger']) %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-     {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
-
-        {% for message in get_flashed_messages(category_filter=['info']) %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-     {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
 
 
     <h1>Edit Account</h1>
     <br/>
 
-    <form class="row g-3 border border-3 p-3 bg-white" method="POST">
+     <form class="shadow row g-3 border border-3 p-3 bg-white" method="POST">
      {{ form.hidden_tag() }}
 
       <div class="col-12">
        {{ form.email.label(
         class="form-label") }}
         {{ form.email(
-        class="form-control") }}
+        class="form-control", placeholder="Example@email.com") }}
       </div>
-
         <div class="col-md-6">
         {{ form.first_name.label(
         class="form-label") }}
@@ -62,7 +34,6 @@
         {{ form.age(
         class="form-control") }}
       </div>
-
       <div class="col-md-4">
         {{ form.belt_id.label(
         class="form-label") }}
@@ -75,7 +46,6 @@
         {{ form.authority(
         class="form-select") }}
       </div>
-
       <div class="col-12">
         {{ form.submit(
         class="btn btn-primary") }}
@@ -83,6 +53,5 @@
     </form>
 
     <br/><br/><br/>
-
-     </div>
+    </div>
 {% endblock %}
