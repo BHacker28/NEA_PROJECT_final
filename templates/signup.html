@@ -2,34 +2,7 @@
 {% block content %}
  <div class="container">
 
-
-{% if account %}
-      <h1>Account has been created!</h1>
-            <br/><br/>
-        <div class="card">
-      <div class="card-header">
-        {{ account.email }}
-      </div>
-      <div class="card-body">
-        <h5 class="card-title">Account Details:</h5>
-        <p class="card-text">
-            <strong>First Name:</strong> {{ account.user.first_name }}<br/>
-            <strong>Last Name:</strong> {{ account.user.last_name }}<br/>
-            <strong>Age:</strong> {{ account.user.age }}<br/>
-            <strong>Belt:</strong> {{ account.user.belt.belt_name }}<br/>
-            <strong>Date Joined:</strong> {{ account.date_added }}<br/>
-            <strong>Account Type:</strong> {{ account.authority }}<br/>
-        </p>
-      </div>
-    </div>
-    <br/>
-    <a href="{{ url_for('create_student') }}" class="btn btn-outline-primary btn-sm">Create New Account</a>
-    <a href="{{ url_for('edit_account', id=account.id) }}" class="btn btn-outline-secondary btn-sm">Edit Account</a>
-    <a href="{{ url_for('delete_account', id=account.id) }}" class="btn btn-outline-danger btn-sm">Delete Account</a>
-    {% else %}
-
-
-    <h1>Create a New User</h1>
+    <h1>Sign Up</h1>
     <br/>
 
     <form class="row g-3 border border-3 p-3 bg-white" method="POST">
@@ -40,7 +13,6 @@
         class="form-label") }}
         {{ form.email(
         class="form-control", placeholder="Example@email.com") }}
-
       </div>
 
       <div class="col-md-6">
@@ -83,6 +55,5 @@
     </form>
 
     <br/><br/><br/>
-{% endif %}
     </div>
 {% endblock %}

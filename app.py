@@ -6,7 +6,6 @@ from wtforms.validators import DataRequired, EqualTo, Length, NoneOf, NumberRang
 from wtforms.widgets import TextArea
 from datetime import date, datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms.widgets import TextArea
 import yaml
 import mysql.connector
 from mysql.connector import errorcode
@@ -14,21 +13,6 @@ from dateutil.relativedelta import relativedelta
 import webbrowser
 import calendar
 from Classes import Account, Lesson
-
-
-# dictionary of account in a session takes form:
-# {'_id': 1, '_email': 's', '_password_hash':
-# 'sha256$joODB5oL94CRGYYC$a39acb5d56a03905bd1c168ad8afc0c0d8d64577d15d9070eb365e38060e5737', '_user_id': 1,
-# '_authority': 'student', '_last_logged_in': datetime.datetime(2022, 3, 22, 12, 56, 13), '_date_added':
-# datetime.datetime(2022, 3, 22, 12, 56, 13), '_first_name': 'Ben', '_last_name': 'Hacker', '_age': 18, '_belt_id':
-# 1, '_last_graded': datetime.datetime(2022, 3, 22, 12, 56, 13), '_approved': None}
-
-# manage users and delete them
-
-
-
-# other things
-# create custom error 500 page
 
 # Create the app
 app = Flask(__name__)
@@ -39,9 +23,6 @@ app = Flask(__name__)
 db = yaml.safe_load(open('db.yaml'))
 
 
-# !!!WARNING!!! DEV TOOL ONLY
-# This deletes all tables from current database in order to refresh them. This method is extremely destructive and
-# must be used with caution
 def DeleteAllTables(cursor, key):
     if key == db['db_wipe_key']:
         try:
@@ -52,22 +33,20 @@ def DeleteAllTables(cursor, key):
             cursor.execute("DROP TABLE LESSONS")
         except:
             print("Table doesn't exist")
+
         try:
-            int("hello")
             cursor.execute("DROP TABLE ACCOUNTS")
 
         except:
             print("Table doesn't exist")
 
         try:
-            int("hello")
             cursor.execute("DROP TABLE USERS")
 
         except:
             print("Table doesn't exist")
 
         try:
-            int("hello")
             cursor.execute("DROP TABLE BELTS")
 
         except:
@@ -78,7 +57,7 @@ def DeleteAllTables(cursor, key):
         print("\n\n" + "-" * 60 + "\n\nDatabase wipe attempted and failed due to invalid key.\n\n" + '-' * 60)
 
 
-# SQL Statements for table check and creation
+# DDL script Statements for table check and creation
 
 TABLES = {'BELTS': '''CREATE TABLE BELTS(
                    belt_id int PRIMARY KEY,
@@ -160,7 +139,6 @@ mycursor = mydb.cursor(buffered=True)
 
 
 # CREATE THE TABLES WHICH DO NOT EXIST
-
 def table_check(cursor):
     table_count = 0
 
@@ -190,7 +168,6 @@ def table_check(cursor):
 
 
 # Checks to see if any tables are missing
-# DeleteAllTables(mycursor, 9121)
 table_check(mycursor)
 mydb.commit()
 
@@ -297,10 +274,12 @@ class NewLessonForm(FlaskForm):
     location = SelectField("Location", choices=[('0', 'Choose...'), ('wincanton', 'Wincanton'), ('merriot', 'Merriot'),
                                                 ('queen camel', 'Queen Camel')],
                            validators=[NoneOf('0', 'Choose...')])
-    level = SelectField("Aimed at:", choices=[('0', 'Choose...'),('all', 'All'), ('adults', 'Adults'), ('children', 'Children'),
-                                            ('little samurai', 'Little Samurai'), ('senior grades', 'Senior Grades'), ('junior grades', 'Junior Grades')],
-                           validators=[NoneOf('0', 'Choose...')])
-    information = StringField("Class Information", validators=[DataRequired()], widget=TextArea())
+    level = SelectField("Aimed at:",
+                        choices=[('0', 'Choose...'), ('all', 'All'), ('adults', 'Adults'), ('children', 'Children'),
+                                 ('little samurai', 'Little Samurai'), ('senior grades', 'Senior Grades'),
+                                 ('junior grades', 'Junior Grades')],
+                        validators=[NoneOf('0', 'Choose...')])
+    information = StringField("Class Information", widget=TextArea())
 
     submit = SubmitField("Confirm")
 
@@ -313,7 +292,6 @@ class NewLessonForm(FlaskForm):
 
 # Function to calculate the difference between two dates
 def calc_date_between(start, end):
-
     # checks to see if end argument is now, this was added to easily calculate ages from dates of birth.
     if end == "now":
         # Gets current date
@@ -342,7 +320,7 @@ def calc_date_between(start, end):
     Date_in_form = date(years, months, days)
 
     # Returns a tuple, containing the date object, as well as each component individually.
-    return  Date_in_form, years, months, days
+    return Date_in_form, years, months, days
 
 
 def conv_accountid_obj(id):
@@ -422,15 +400,14 @@ def update_account_to_db(account):
         users_age = account.age
         foreign_belt_id = account.belt_id
         users_last_graded = account.last_graded
-        print(accounts_id)
-        print(accounts_email)
-        print(users_age)
 
         mycursor.execute("UPDATE Accounts SET email=%s, password_hash=%s, last_logged_in=%s, date_added=%s, "
                          "authority=%s, user_id=%s, approved=%s WHERE id=%s", (accounts_email, accounts_password_hash,
-                                                                  accounts_last_logged_in, accounts_date_added,
-                                                                  accounts_authority,
-                                                                  foreign_user_id,account.approved, accounts_id))
+                                                                               accounts_last_logged_in,
+                                                                               accounts_date_added,
+                                                                               accounts_authority,
+                                                                               foreign_user_id, account.approved,
+                                                                               accounts_id))
         mycursor.execute("UPDATE Users SET first_name=%s, last_name=%s, age=%s, last_graded=%s, belt_id=%s WHERE "
                          "user_id=%s", (users_first_name, users_last_name, users_age, users_last_graded,
                                         foreign_belt_id, foreign_user_id))
@@ -478,12 +455,12 @@ def insert_lesson_into_db(lesson):
     try:
 
         sql_insert_into_lessons = "INSERT INTO lessons (lesson_id, day ,day_index, start_time, end_time, location, " \
-                                   "maximum, info, level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
-        lessonvalues = (lesson.lesson_id, lesson.day,lesson.day_index, lesson.start_time, lesson.end_time, lesson.location,
-                         lesson.maximum, lesson.info, lesson.level)
+                                  "maximum, info, level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        lessonvalues = (
+        lesson.lesson_id, lesson.day, lesson.day_index, lesson.start_time, lesson.end_time, lesson.location,
+        lesson.maximum, lesson.info, lesson.level)
 
         mycursor.execute(sql_insert_into_lessons, lessonvalues)
-
 
         mydb.commit()
 
@@ -491,7 +468,7 @@ def insert_lesson_into_db(lesson):
         print(error.msg)
 
 
-def book_into_lesson(lesson_id,user_id, date_to_book):
+def book_into_lesson(lesson_id, user_id, date_to_book):
     try:
         mycursor.execute("SELECT booking_id FROM bookings ORDER BY booking_id DESC")
         next_id = mycursor.fetchone()
@@ -515,7 +492,7 @@ def book_into_lesson(lesson_id,user_id, date_to_book):
 # ======================================================================================================================
 
 # Create a route decorator
-@app.route('/', methods=['GET','POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():  # Opening Page
     session['user'] = None
     return render_template("index.html")
@@ -542,7 +519,8 @@ def login():
                     session['user']['_date_added'] = session['user']['_date_added']
                     return redirect(url_for('dashboard'))
                 else:
-                    flash("Your account hasn't been approved yet. Please wait for your instructor to do so.", category="info")
+                    flash("Your account hasn't been approved yet. Please wait for your instructor to do so.",
+                          category="info")
             else:
                 flash("Wrong Password or Username. Try Again...", category="danger_below")
         except:
@@ -593,19 +571,23 @@ def manage_accounts():
 
     filtered_users = None
     form = SearchForm()
-    sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id"
+    sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, " \
+                 "users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id "
     mycursor.execute(sql_search)
     filtered_users = mycursor.fetchall()
 
     if form.validate_on_submit():
         if form.search.data != '':
-            sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id WHERE users.last_name LIKE %(search)s"
+            sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, " \
+                         "accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = " \
+                         "accounts.user_id WHERE users.last_name LIKE %(search)s "
             parameter = {"search": form.search.data + "%"}
             mycursor.execute(sql_search, parameter)
             filtered_users = mycursor.fetchall()
-            print(filtered_users)
         else:
-            sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = accounts.user_id"
+            sql_search = "SELECT users.first_name, users.last_name, accounts.email, accounts.date_added, " \
+                         "accounts.approved, users.user_id FROM users INNER JOIN accounts ON users.user_id = " \
+                         "accounts.user_id "
             mycursor.execute(sql_search)
             filtered_users = mycursor.fetchall()
 
@@ -626,10 +608,8 @@ def edit_manage_accounts(id):
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-
     form = EditStudentAsInstructorForm()
     edit_account = conv_accountid_obj(id)
-
 
     if form.validate_on_submit():
 
@@ -651,13 +631,11 @@ def edit_manage_accounts(id):
         form.authority.data = edit_account.authority
         form.belt_id.data = edit_account.belt_id
 
-
         return render_template("edit_account.html", form=form)
 
 
 @app.route('/accounts/manage/delete/<id>', methods=['GET', 'POST'])
 def delete_manage_accounts(id):
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
         auth = account.authority
@@ -688,7 +666,6 @@ def delete_manage_accounts(id):
 
 @app.route('/accounts/manage/approve/<id>', methods=['GET', 'POST'])
 def approve_manage_accounts(id):
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
         auth = account.authority
@@ -703,7 +680,6 @@ def approve_manage_accounts(id):
 
     approve_account = conv_accountid_obj(id)
     approve_account.approved = True
-    print("test")
     update_account_to_db(approve_account)
     flash("Student has been approved.", "info")
     return redirect(url_for('manage_accounts'))
@@ -777,7 +753,6 @@ def create_student():
                            form=form)
 
 
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = SignUpForm()
@@ -819,6 +794,8 @@ def signup():
             flash("Account request Successful! Please wait for the account to be approved by your instructor.",
                   'success')
             return redirect(url_for('index'))
+        else:
+            flash("Sorry this email already exists.", "danger")
 
         form.first_name.data = ''
         form.last_name.data = ''
@@ -833,7 +810,6 @@ def signup():
 
 @app.route('/account/edit', methods=['GET', 'POST'])
 def edit_student():
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
 
@@ -844,7 +820,6 @@ def edit_student():
 
     form = EditStudentForm()
     edit_account = conv_accountid_obj(session['user']['_id'])
-
 
     if form.validate_on_submit():
 
@@ -865,11 +840,12 @@ def edit_student():
 
         return render_template("edit_student.html", form=form)
 
+
 # ======================================================================================================================
 # Lessons
 # ======================================================================================================================
 @app.route('/bookings/list/<date>/<id>', methods=['GET', 'POST'])
-def list_booked(id,date):
+def list_booked(id, date):
     try:
         account = conv_accountid_obj(session['user']['_id'])
         auth = account.authority
@@ -882,19 +858,21 @@ def list_booked(id,date):
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    sql_get_bookings = "SELECT accounts.email, users.first_name, users.last_name, belts.belt_name, users.user_id FROM accounts INNER JOIN users ON accounts.user_id = users.user_id INNER JOIN bookings ON users.user_id = bookings.user_id INNER JOIN belts ON belts.belt_id = users.belt_id WHERE bookings.lesson_id = %(lesson_id)s AND bookings.date = %(date)s"
+    sql_get_bookings = "SELECT accounts.email, users.first_name, users.last_name, belts.belt_name, users.user_id FROM " \
+                       "accounts INNER JOIN users ON accounts.user_id = users.user_id INNER JOIN bookings ON " \
+                       "users.user_id = bookings.user_id INNER JOIN belts ON belts.belt_id = users.belt_id WHERE " \
+                       "bookings.lesson_id = %(lesson_id)s AND bookings.date = %(date)s "
     parameters = {'lesson_id': id, 'date': date}
-    mycursor.execute(sql_get_bookings,parameters)
+    mycursor.execute(sql_get_bookings, parameters)
     all_bookings = mycursor.fetchall()
     lesson_info = conv_lessonid_obj(id)
     lesson_info = lesson_info.__dict__
 
-    return render_template("list_bookings.html", all_bookings=all_bookings, lesson=lesson_info, date=date,id=id)
+    return render_template("list_bookings.html", all_bookings=all_bookings, lesson=lesson_info, date=date, id=id)
 
 
 @app.route('/bookings/list/<date>/<id>/remove/<student_id>', methods=['GET', 'POST'])
 def list_booked_delete(id, student_id, date):
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
         auth = account.authority
@@ -906,10 +884,6 @@ def list_booked_delete(id, student_id, date):
 
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
-
-    print(id)
-    print(student_id)
-    print(date)
 
     sql_delete_account = "DELETE FROM bookings WHERE user_id=%(student_id)s AND lesson_id=%(id)s AND date=%(date)s"
     parameter = {'id': id, 'student_id': student_id, 'date': date}
@@ -921,7 +895,6 @@ def list_booked_delete(id, student_id, date):
 
 @app.route('/create/lesson', methods=['GET', 'POST'])
 def create_lesson():
-
     form = NewLessonForm()
     try:
         account = conv_accountid_obj(session['user']['_id'])
@@ -937,7 +910,8 @@ def create_lesson():
 
     if form.validate_on_submit():
         if form.validate_times(form.lesson_start.data, form.lesson_end.data):
-            search_lessons_statement = "SELECT day, start_time, lesson_id, location FROM lessons WHERE start_time = %(start_time)s AND day = %(day)s and location = %(location)s"
+            search_lessons_statement = "SELECT day, start_time, lesson_id, location FROM lessons WHERE start_time = " \
+                                       "%(start_time)s AND day = %(day)s and location = %(location)s "
             parameters = {'start_time': form.lesson_start.data, 'day': form.day.data, 'location': form.location.data}
             mycursor.execute(search_lessons_statement, parameters)
             lesson = mycursor.fetchone()
@@ -1019,9 +993,9 @@ def delete_lesson(id):
 
     return render_template("delete_lessons.html", form=form, lesson=lesson_info)
 
+
 @app.route('/book/location', methods=['GET', 'POST'])
 def location_choice():
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
 
@@ -1029,14 +1003,12 @@ def location_choice():
 
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
-
 
     return render_template("location_choice.html")
 
 
 @app.route('/view/bookings', methods=['GET', 'POST'])
 def view_bookings():
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
 
@@ -1045,12 +1017,14 @@ def view_bookings():
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    get_bookings = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER JOIN users ON bookings.user_id=users.user_id WHERE users.user_id = %(user_id)s ORDER BY bookings.date "
+    get_bookings = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, " \
+                   "bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id " \
+                   "INNER JOIN users ON bookings.user_id=users.user_id WHERE users.user_id = %(user_id)s ORDER BY " \
+                   "bookings.date "
     parameter = {'user_id': session['user']['_id']}
     mycursor.execute(get_bookings, parameter)
     bookings = mycursor.fetchall()
     bookings = list(bookings)
-    print(bookings)
 
     # create variable and list used in loop
     count = 0
@@ -1105,7 +1079,10 @@ def cancel_booking(booking_id):
         flash("Sorry, you must be logged in to use this feature.", category="danger_below")
         return redirect(url_for('login'))
 
-    get_bookings = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER JOIN users ON bookings.user_id=users.user_id WHERE users.user_id = %(user_id)s ORDER BY bookings.date "
+    get_bookings = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, " \
+                   "bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id " \
+                   "INNER JOIN users ON bookings.user_id=users.user_id WHERE users.user_id = %(user_id)s ORDER BY " \
+                   "bookings.date "
     parameter = {'user_id': session['user']['_id']}
     mycursor.execute(get_bookings, parameter)
     bookings = mycursor.fetchall()
@@ -1144,7 +1121,9 @@ def cancel_booking(booking_id):
 
     bookings = tuple(bookings_list)
 
-    get_booking = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER JOIN users ON bookings.user_id=users.user_id WHERE bookings.booking_id = %(id)s"
+    get_booking = "SELECT lessons.day, lessons.start_time, lessons.end_time, lessons.location, bookings.date, " \
+                  "bookings.booking_id FROM lessons INNER JOIN bookings ON lessons.lesson_id=bookings.lesson_id INNER " \
+                  "JOIN users ON bookings.user_id=users.user_id WHERE bookings.booking_id = %(id)s "
     booking_parameter = {'id': int(booking_id)}
     mycursor.execute(get_booking, booking_parameter)
     booking = mycursor.fetchone()
@@ -1154,12 +1133,14 @@ def cancel_booking(booking_id):
     if form.validate_on_submit():
         sql_delete_booking = "DELETE FROM bookings WHERE booking_id=%(id)s"
         parameter = {'id': int(booking_id)}
-        mycursor.execute(sql_delete_booking,parameter)
+        mycursor.execute(sql_delete_booking, parameter)
         mydb.commit()
         flash("Your booking has been removed.", "info")
         return redirect(url_for('view_bookings'))
 
     return render_template("view_bookings_overlay.html", bookings=bookings, booking=booking, form=form)
+
+
 # ======================================================================================================================
 # Wincanton
 # ======================================================================================================================
@@ -1167,7 +1148,6 @@ def cancel_booking(booking_id):
 
 @app.route('/book/location/wincanton', methods=['GET', 'POST'])
 def location_wincanton():
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
 
@@ -1191,7 +1171,7 @@ def location_wincanton():
         time_delta = lesson[3]
         seconds = time_delta.seconds
         hours = seconds // 3600
-        minutes = (seconds//60) - (hours*60)
+        minutes = (seconds // 60) - (hours * 60)
 
         if minutes < 10:
             time = "{}:{}0".format(hours, minutes)
@@ -1259,10 +1239,6 @@ def book_lesson_wincanton(id):
 
     booking_information['_end_time'] = time
 
-
-
-
-    print(booking_information)
     # create variable and list used in loop
     count = 0
     lesson_list = []
@@ -1308,11 +1284,10 @@ def book_lesson_wincanton(id):
         number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
 
         parameter = {'lesson_id': book_into.lesson_id, 'date': date_to_book}
-        mycursor.execute(number_in_lesson,parameter)
+        mycursor.execute(number_in_lesson, parameter)
         database_output = mycursor.fetchall()
         current_total = len(database_output)
         new_total = current_total + 1
-
 
         if diff_today_booking < 0:
             flash("This class has already happened this week. Please try booking for a different class.", "danger")
@@ -1336,7 +1311,7 @@ def book_lesson_wincanton(id):
                 flash("This class has already happened. Please try booking for a different class.", "danger")
                 return redirect(url_for("location_wincanton"))
 
-        if new_total < book_into.maximum:
+        if new_total <= book_into.maximum:
             already_booked = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s AND user_id " \
                              "= %(user_id)s "
             parameter_2 = {'lesson_id': book_into.lesson_id, 'date': date_to_book, 'user_id': session['user']['_id']}
@@ -1355,7 +1330,9 @@ def book_lesson_wincanton(id):
             flash("Sorry, the class is full.", "warning")
             return redirect(url_for("location_wincanton"))
 
-    return render_template("book_overlay_wincanton.html", lessons=lessons, form=form, info=booking_information, date_to_book=date_to_book)
+    return render_template("book_overlay_wincanton.html", lessons=lessons, form=form, info=booking_information,
+                           date_to_book=date_to_book)
+
 
 # ======================================================================================================================
 # Merriot
@@ -1364,7 +1341,6 @@ def book_lesson_wincanton(id):
 
 @app.route('/book/location/Merriot', methods=['GET', 'POST'])
 def location_merriot():
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
 
@@ -1388,10 +1364,10 @@ def location_merriot():
         time_delta = lesson[3]
         seconds = time_delta.seconds
         hours = seconds // 3600
-        minutes = (seconds//60) - (hours*60)
+        minutes = (seconds // 60) - (hours * 60)
 
         if minutes < 10:
-            time = "{}:{}0".format(hours,minutes)
+            time = "{}:{}0".format(hours, minutes)
         else:
             time = "{}:{}".format(hours, minutes)
         lesson[3] = time
@@ -1499,11 +1475,10 @@ def book_lesson_merriot(id):
         number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
 
         parameter = {'lesson_id': book_into.lesson_id, 'date': today_date}
-        mycursor.execute(number_in_lesson,parameter)
+        mycursor.execute(number_in_lesson, parameter)
         database_output = mycursor.fetchall()
         current_total = len(database_output)
         new_total = current_total + 1
-
 
         if diff_today_booking < 0:
             flash("This class has already happened this week. Please try booking for a different class.", "danger")
@@ -1556,7 +1531,6 @@ def book_lesson_merriot(id):
 
 @app.route('/book/location/queencamel', methods=['GET', 'POST'])
 def location_queen_camel():
-
     try:
         account = conv_accountid_obj(session['user']['_id'])
 
@@ -1580,10 +1554,10 @@ def location_queen_camel():
         time_delta = lesson[3]
         seconds = time_delta.seconds
         hours = seconds // 3600
-        minutes = (seconds//60) - (hours*60)
+        minutes = (seconds // 60) - (hours * 60)
 
         if minutes < 10:
-            time = "{}:{}0".format(hours,minutes)
+            time = "{}:{}0".format(hours, minutes)
         else:
             time = "{}:{}".format(hours, minutes)
         lesson[3] = time
@@ -1602,7 +1576,6 @@ def location_queen_camel():
         count += 1
 
     lessons = tuple(lesson_list)
-    print(lessons)
     return render_template("location_queen_camel.html", lessons=lessons)
 
 
@@ -1692,11 +1665,10 @@ def book_lesson_queen_camel(id):
         number_in_lesson = "SELECT * FROM bookings WHERE lesson_id = %(lesson_id)s AND date = %(date)s"
 
         parameter = {'lesson_id': book_into.lesson_id, 'date': today_date}
-        mycursor.execute(number_in_lesson,parameter)
+        mycursor.execute(number_in_lesson, parameter)
         database_output = mycursor.fetchall()
         current_total = len(database_output)
         new_total = current_total + 1
-
 
         if diff_today_booking < 0:
             flash("This class has already happened this week. Please try booking for a different class.", "danger")
@@ -1740,6 +1712,8 @@ def book_lesson_queen_camel(id):
             return redirect(url_for("location_queen_camel"))
 
     return render_template("book_overlay_queen_camel.html", lessons=lessons, form=form, info=booking_information)
+
+
 # ======================================================================================================================
 # Error Handlers
 # ======================================================================================================================
@@ -1748,6 +1722,7 @@ def book_lesson_queen_camel(id):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html")
+
 
 # Run the App
 if __name__ == '__main__':
